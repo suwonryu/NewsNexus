@@ -47,6 +47,7 @@ export default function DateSelector({ onDateChange }: DateSelectorProps) {
             selected={selectedDate}
             onChange={handleDateChange}
             inline
+            maxDate={new Date()}
           />
         </div>
       )}
