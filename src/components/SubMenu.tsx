@@ -1,0 +1,107 @@
+import { useEffect, useRef } from 'react';
+import type { ArticleListItem } from '../types/article';
+
+interface SubMenuProps {
+  selectedDate: string | null;
+  items: ArticleListItem[];
+  selectedArticleId: number | null;
+  isLoading: boolean;
+  hasMore: boolean;
+  onSelectArticle: (articleId: number) => void;
+  onLoadMore: () => void;
+  className?: string;
+}
+
+function SubMenu({
+  selectedDate,
+  items,
+  selectedArticleId,
+  isLoading,
+  hasMore,
+  onSelectArticle,
+  onLoadMore,
+  className,
+}: SubMenuProps) {
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedDate || !hasMore || isLoading) {
+      return;
+    }
+
+    const target = sentinelRef.current;
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '120px' },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [selectedDate, hasMore, isLoading, onLoadMore]);
+
+  return (
+    <aside
+      className={`overflow-y-auto rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
+    >
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Stories</p>
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">기사 목록</h2>
+
+      {!selectedDate && <p className="text-sm text-slate-600">날짜를 선택하세요</p>}
+
+      {selectedDate && (
+        <>
+          <p className="mb-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+            {selectedDate}
+          </p>
+          <ul className="space-y-2">
+            {items.map((article) => (
+              <li key={article.id ?? article.link}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (article.id !== null) {
+                      onSelectArticle(article.id);
+                    }
+                  }}
+                  disabled={article.id === null}
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    article.id !== null && selectedArticleId === article.id
+                      ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
+                      : article.id === null
+                        ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                        : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                  }`}
+                >
+                  <div className="text-sm font-semibold text-slate-900">{article.title}</div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    {article.sourceName}
+                  </div>
+                  {article.id === null && (
+                    <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {isLoading && <p className="mt-3 text-xs text-slate-500">불러오는 중...</p>}
+          {selectedDate && !isLoading && items.length === 0 && (
+            <p className="text-sm text-slate-600">기사가 없습니다</p>
+          )}
+
+          <div ref={sentinelRef} className="h-3" />
+        </>
+      )}
+    </aside>
+  );
+}
+
+export default SubMenu;
