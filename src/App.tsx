@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useState } from 'react';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';

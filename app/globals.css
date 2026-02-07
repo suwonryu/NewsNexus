@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-1: #f7fafc;
+  --bg-2: #eef2ff;
+  --ink-1: #0f172a;
+  --ink-2: #475569;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink-1);
+  font-family: 'Space Grotesk', 'Noto Sans KR', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
+    radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.14), transparent 32%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+#root {
+  min-height: 100vh;
+}
