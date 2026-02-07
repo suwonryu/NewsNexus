@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NewsNexus',
+  title: '오늘의 카카오뱅크',
   description: 'NewsNexus article browser',
 };
 
