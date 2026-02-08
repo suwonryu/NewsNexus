@@ -16,21 +16,15 @@ function MainMenu({
   className,
   showHeader = true,
 }: MainMenuProps) {
-  const [openYears, setOpenYears] = useState<Record<number, boolean>>({});
-  const [openMonths, setOpenMonths] = useState<Record<string, boolean>>({});
+  const [openYear, setOpenYear] = useState<number | null>(null);
+  const [openMonthKey, setOpenMonthKey] = useState<string | null>(null);
 
   const toggleYear = (year: number) => {
-    setOpenYears((prev) => ({
-      ...prev,
-      [year]: !prev[year],
-    }));
+    setOpenYear((prev) => (prev === year ? null : year));
   };
 
   const toggleMonth = (monthKey: string) => {
-    setOpenMonths((prev) => ({
-      ...prev,
-      [monthKey]: !prev[monthKey],
-    }));
+    setOpenMonthKey((prev) => (prev === monthKey ? null : monthKey));
   };
 
   useEffect(() => {
@@ -43,14 +37,8 @@ function MainMenu({
     const month = Number(monthText);
     const monthKey = `${year}-${month}`;
 
-    setOpenYears((prev) => ({
-      ...prev,
-      [year]: true,
-    }));
-    setOpenMonths((prev) => ({
-      ...prev,
-      [monthKey]: true,
-    }));
+    setOpenYear(year);
+    setOpenMonthKey(monthKey);
   }, [selectedDate]);
 
   return (
@@ -60,66 +48,110 @@ function MainMenu({
       {showHeader && (
         <>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Timeline</p>
-          <h2 className="text-xl font-semibold mb-4 text-slate-900">날짜</h2>
+          <h2 className="text-xl font-[650] mb-4 text-slate-900">날짜</h2>
         </>
       )}
       <nav aria-label="기사 날짜">
         <ul className="space-y-3">
           {dateTree.map((yearGroup) => {
-            const isOpen = openYears[yearGroup.year] ?? false;
+            const isOpen = openYear === yearGroup.year;
 
             return (
               <li key={yearGroup.year}>
                 <button
                   type="button"
                   onClick={() => toggleYear(yearGroup.year)}
-                  className="w-full rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-left font-semibold text-slate-800 transition hover:border-cyan-300 hover:text-cyan-700"
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-left font-[650] text-slate-800 transition hover:border-cyan-300 hover:text-cyan-700"
                 >
-                  {yearGroup.year}년
+                  <span>{yearGroup.year}년</span>
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    aria-hidden="true"
+                    className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path
+                      d="M5 7.5L10 12.5L15 7.5"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
-                {isOpen && (
-                  <ul className="pl-3 mt-2 space-y-2">
-                    {yearGroup.months.map((monthGroup) => (
-                      <li key={`${yearGroup.year}-${monthGroup.month}`}>
-                        {(() => {
-                          const monthKey = `${yearGroup.year}-${monthGroup.month}`;
-                          const isMonthOpen = openMonths[monthKey] ?? false;
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                    isOpen ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <ul className="pl-3 space-y-2">
+                      {yearGroup.months.map((monthGroup) => (
+                        <li key={`${yearGroup.year}-${monthGroup.month}`}>
+                          {(() => {
+                            const monthKey = `${yearGroup.year}-${monthGroup.month}`;
+                            const isMonthOpen = openMonthKey === monthKey;
 
-                          return (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => toggleMonth(monthKey)}
-                                className="w-full rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
-                              >
-                                {monthGroup.month}월
-                              </button>
-                              {isMonthOpen && (
-                                <ul className="pl-3 mt-1 space-y-1">
-                                  {monthGroup.days.map((day) => (
-                                    <li key={day}>
-                                      <button
-                                        type="button"
-                                        onClick={() => onSelectDate(day)}
-                                        className={`w-full rounded-md px-2 py-1 text-left text-sm transition ${
-                                          selectedDate === day
-                                            ? 'font-semibold text-cyan-700 bg-cyan-50'
-                                            : 'text-slate-700 hover:bg-slate-100 hover:text-cyan-700'
-                                        }`}
-                                      >
-                                        {day}
-                                      </button>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleMonth(monthKey)}
+                                  aria-expanded={isMonthOpen}
+                                  className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                >
+                                  <span>{monthGroup.month}월</span>
+                                  <svg
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    aria-hidden="true"
+                                    className={`h-3.5 w-3.5 transition-transform duration-300 ${
+                                      isMonthOpen ? 'rotate-180' : ''
+                                    }`}
+                                  >
+                                    <path
+                                      d="M5 7.5L10 12.5L15 7.5"
+                                      stroke="currentColor"
+                                      strokeWidth="1.7"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </button>
+                                <div
+                                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                                    isMonthOpen ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'
+                                  }`}
+                                >
+                                  <div className="overflow-hidden">
+                                    <ul className="pl-3 space-y-1">
+                                      {monthGroup.days.map((day) => (
+                                        <li key={day}>
+                                          <button
+                                            type="button"
+                                            onClick={() => onSelectDate(day)}
+                                            className={`w-full rounded-md px-2 py-1 text-left text-sm transition ${
+                                              selectedDate === day
+                                                ? 'font-[650] text-cyan-700 bg-cyan-50'
+                                                : 'text-slate-700 hover:bg-slate-100 hover:text-cyan-700'
+                                            }`}
+                                          >
+                                            {day}
+                                          </button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </li>
             );
           })}

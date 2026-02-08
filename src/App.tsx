@@ -152,6 +152,15 @@ function App() {
   };
 
   const handleSelectArticle = (articleId: number) => {
+    if (articleId === selectedArticleId) {
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        setMobileView('detail');
+      }
+      return;
+    }
+
+    setArticleDetail(null);
+    setIsDetailLoading(true);
     setSelectedArticleId(articleId);
 
     if (window.matchMedia('(max-width: 767px)').matches) {
@@ -204,7 +213,7 @@ function App() {
         <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur">
           <p className="text-xs uppercase tracking-[0.14em] text-slate-500">NewsNexus</p>
           <div className="mt-2 flex items-center justify-between gap-3">
-            <h1 className="text-lg font-semibold text-slate-900">
+            <h1 className="text-lg font-[650] text-slate-900">
               {mobileView === 'list' ? '기사 목록' : '기사 보기'}
             </h1>
             <button
@@ -309,7 +318,7 @@ function App() {
         >
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">날짜 선택</h2>
+            <h2 className="text-base font-[650] text-slate-900">날짜 선택</h2>
             <button
               type="button"
               onClick={() => setIsDateSheetOpen(false)}

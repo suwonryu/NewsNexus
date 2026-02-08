@@ -52,7 +52,7 @@ function SubMenu({
       className={`overflow-y-auto rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
     >
       <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Stories</p>
-      <h2 className="text-xl font-semibold mb-4 text-slate-900">기사 목록</h2>
+      <h2 className="text-xl font-[650] mb-4 text-slate-900">기사 목록</h2>
 
       {!selectedDate && <p className="text-sm text-slate-600">날짜를 선택하세요</p>}
 
@@ -80,7 +80,7 @@ function SubMenu({
                         : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
                   }`}
                 >
-                  <div className="text-sm font-semibold text-slate-900">{article.title}</div>
+                  <div className="text-sm font-[650] text-slate-900">{article.title}</div>
                   <div className="mt-1 text-xs text-slate-600">
                     {article.sourceName}
                   </div>
