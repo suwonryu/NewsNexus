@@ -4,10 +4,10 @@ import type { ArticleListItem } from '../types/article';
 interface SubMenuProps {
   selectedDate: string | null;
   items: ArticleListItem[];
-  selectedArticleId: number | null;
+  selectedArticleKey: string | null;
   isLoading: boolean;
   hasMore: boolean;
-  onSelectArticle: (articleId: number) => void;
+  onSelectArticle: (article: ArticleListItem) => void;
   onLoadMore: () => void;
   className?: string;
 }
@@ -15,7 +15,7 @@ interface SubMenuProps {
 function SubMenu({
   selectedDate,
   items,
-  selectedArticleId,
+  selectedArticleKey,
   isLoading,
   hasMore,
   onSelectArticle,
@@ -23,6 +23,8 @@ function SubMenu({
   className,
 }: SubMenuProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const todayIsoDate = new Date().toISOString().slice(0, 10);
+  const canOpenNullIdArticle = selectedDate === todayIsoDate;
 
   useEffect(() => {
     if (!selectedDate || !hasMore || isLoading) {
@@ -63,19 +65,20 @@ function SubMenu({
           </p>
           <ul className="space-y-2">
             {items.map((article) => (
-              <li key={article.id ?? article.link}>
+              <li key={`${article.id ?? 'null'}:${article.link}`}>
                 <button
                   type="button"
                   onClick={() => {
-                    if (article.id !== null) {
-                      onSelectArticle(article.id);
+                    const isDisabled = article.id === null && !canOpenNullIdArticle;
+                    if (!isDisabled) {
+                      onSelectArticle(article);
                     }
                   }}
-                  disabled={article.id === null}
+                  disabled={article.id === null && !canOpenNullIdArticle}
                   className={`w-full rounded-xl border p-3 text-left transition ${
-                    article.id !== null && selectedArticleId === article.id
+                    selectedArticleKey === `${article.id ?? 'null'}:${article.link}`
                       ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
-                      : article.id === null
+                      : article.id === null && !canOpenNullIdArticle
                         ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                         : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
                   }`}
@@ -84,7 +87,7 @@ function SubMenu({
                   <div className="mt-1 text-xs text-slate-600">
                     {article.sourceName}
                   </div>
-                  {article.id === null && (
+                  {article.id === null && !canOpenNullIdArticle && (
                     <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
                   )}
                 </button>

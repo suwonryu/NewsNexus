@@ -23,6 +23,8 @@ function App() {
   const [dateTree, setDateTree] = useState<DateTreeYear[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(() => getTodayIsoDate());
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
+  const [selectedArticleKey, setSelectedArticleKey] = useState<string | null>(null);
+  const [pendingArticle, setPendingArticle] = useState<ArticleListItem | null>(null);
   const [articles, setArticles] = useState<ArticleListItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -142,6 +144,8 @@ function App() {
 
     setSelectedDate(date);
     setSelectedArticleId(null);
+    setSelectedArticleKey(null);
+    setPendingArticle(null);
     setArticleDetail(null);
     setArticles([]);
     setNextCursor(null);
@@ -151,17 +155,32 @@ function App() {
     setIsDateSheetOpen(false);
   };
 
-  const handleSelectArticle = (articleId: number) => {
-    if (articleId === selectedArticleId) {
+  const handleSelectArticle = (article: ArticleListItem) => {
+    const articleKey = `${article.id ?? 'null'}:${article.link}`;
+    if (articleKey === selectedArticleKey) {
       if (window.matchMedia('(max-width: 767px)').matches) {
         setMobileView('detail');
       }
       return;
     }
 
-    setArticleDetail(null);
-    setIsDetailLoading(true);
-    setSelectedArticleId(articleId);
+    setSelectedArticleKey(articleKey);
+
+    if (article.id === null) {
+      if (selectedDate !== getTodayIsoDate()) {
+        return;
+      }
+
+      setSelectedArticleId(null);
+      setPendingArticle(article);
+      setArticleDetail(null);
+      setIsDetailLoading(false);
+    } else {
+      setPendingArticle(null);
+      setArticleDetail(null);
+      setIsDetailLoading(true);
+      setSelectedArticleId(article.id);
+    }
 
     if (window.matchMedia('(max-width: 767px)').matches) {
       setMobileView('detail');
@@ -238,7 +257,7 @@ function App() {
               className="h-full"
               selectedDate={selectedDate}
               items={articles}
-              selectedArticleId={selectedArticleId}
+              selectedArticleKey={selectedArticleKey}
               isLoading={isListLoading || isFetchingMore}
               hasMore={hasMore}
               onSelectArticle={handleSelectArticle}
@@ -265,6 +284,7 @@ function App() {
                 className="h-full"
                 selectedDate={selectedDate}
                 selectedArticleId={selectedArticleId}
+                pendingArticle={pendingArticle}
                 articleDetail={articleDetail}
                 isLoading={isDetailLoading}
               />
@@ -273,7 +293,7 @@ function App() {
         </div>
       </div>
 
-      <div className="hidden md:grid h-[calc(100vh-3rem)] grid-cols-[260px_320px_1fr] gap-3">
+      <div className="hidden md:grid h-[calc(100vh-3rem)] grid-cols-[260px_360px_1fr] gap-3">
         <MainMenu
           dateTree={dateTree}
           selectedDate={selectedDate}
@@ -282,7 +302,7 @@ function App() {
         <SubMenu
           selectedDate={selectedDate}
           items={articles}
-          selectedArticleId={selectedArticleId}
+          selectedArticleKey={selectedArticleKey}
           isLoading={isListLoading || isFetchingMore}
           hasMore={hasMore}
           onSelectArticle={handleSelectArticle}
@@ -291,6 +311,7 @@ function App() {
         <MainContent
           selectedDate={selectedDate}
           selectedArticleId={selectedArticleId}
+          pendingArticle={pendingArticle}
           articleDetail={articleDetail}
           isLoading={isDetailLoading}
         />
