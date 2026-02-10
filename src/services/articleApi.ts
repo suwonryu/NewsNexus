@@ -54,7 +54,8 @@ export async function fetchArticlesByDate(
 
 export async function fetchArticleDetail(id: number): Promise<ArticleDetail> {
   try {
-    return await getJson<ArticleDetail>(`${KABANG_API_BASE}/${id}`);
+    const response = await getJson<KabangDetailResponse>(`${KABANG_API_BASE}/${id}`);
+    return mapKabangDetailResponse(response);
   } catch {
     const fallback = getMockArticleDetail(id);
 
@@ -81,6 +82,16 @@ interface KabangListResponse {
   hasNext: boolean;
   nextCursor: string | null;
   items: KabangListItem[];
+}
+
+interface KabangDetailResponse {
+  id: number;
+  title: string;
+  link: string;
+  summary: string | null;
+  sentiment: string | null;
+  date?: string | null;
+  publishedDate?: string | null;
 }
 
 function normalizeDateForApi(date: string): string {
@@ -124,5 +135,20 @@ function mapKabangListResponse(response: KabangListResponse): ArticleListRespons
     hasNext: response.hasNext,
     nextCursor: response.nextCursor,
     items,
+  };
+}
+
+function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail {
+  return {
+    id: response.id,
+    title: response.title,
+    link: response.link,
+    summary: response.summary,
+    sentiment: response.sentiment,
+    publishedDate: response.publishedDate
+      ? formatDateForDisplay(response.publishedDate)
+      : response.date
+        ? formatDateForDisplay(response.date)
+        : undefined,
   };
 }

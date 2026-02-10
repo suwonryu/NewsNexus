@@ -37,6 +37,7 @@ export interface ArticleDetail {
   id: number;
   title: string;
   link: string;
+  publishedDate?: IsoDate;
   summary: string | null;
   sentiment: string | null;
 }

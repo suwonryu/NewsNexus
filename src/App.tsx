@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
@@ -19,21 +19,86 @@ function getTodayIsoDate(): string {
   return `${year}-${month}-${day}`;
 }
 
-function App() {
+function normalizeToIsoDate(date: string | undefined): string | null {
+  if (!date) {
+    return null;
+  }
+
+  if (/^\d{8}$/.test(date)) {
+    const year = date.slice(0, 4);
+    const month = date.slice(4, 6);
+    const day = date.slice(6, 8);
+    return `${year}-${month}-${day}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  return null;
+}
+
+interface AppProps {
+  initialArticleId?: number | null;
+  initialArticleDetail?: ArticleDetail | null;
+  initialSelectedDate?: string | null;
+  initialArticles?: ArticleListItem[];
+  initialNextCursor?: string | null;
+  initialHasMore?: boolean;
+}
+
+function App({
+  initialArticleId = null,
+  initialArticleDetail = null,
+  initialSelectedDate = null,
+  initialArticles = [],
+  initialNextCursor = null,
+  initialHasMore = false,
+}: AppProps) {
+  const consumedServerInitialListRef = useRef(false);
   const [dateTree, setDateTree] = useState<DateTreeYear[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string | null>(() => getTodayIsoDate());
-  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    () =>
+      initialSelectedDate ??
+      normalizeToIsoDate(initialArticleDetail?.publishedDate) ??
+      getTodayIsoDate(),
+  );
+  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(initialArticleId);
   const [selectedArticleKey, setSelectedArticleKey] = useState<string | null>(null);
   const [pendingArticle, setPendingArticle] = useState<ArticleListItem | null>(null);
-  const [articles, setArticles] = useState<ArticleListItem[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
+  const [articles, setArticles] = useState<ArticleListItem[]>(initialArticles);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [isListLoading, setIsListLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [articleDetail, setArticleDetail] = useState<ArticleDetail | null>(null);
-  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [articleDetail, setArticleDetail] = useState<ArticleDetail | null>(initialArticleDetail);
+  const [isDetailLoading, setIsDetailLoading] = useState(
+    initialArticleId !== null && initialArticleDetail === null,
+  );
   const [isDateSheetOpen, setIsDateSheetOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>(() =>
+    initialArticleId !== null ? 'detail' : 'list',
+  );
+
+  useEffect(() => {
+    const initialPublishedDate = normalizeToIsoDate(initialArticleDetail?.publishedDate);
+    if (initialPublishedDate) {
+      setSelectedDate(initialPublishedDate);
+    }
+
+    setSelectedArticleId(initialArticleId);
+    if (initialArticleDetail) {
+      setSelectedArticleKey(`${initialArticleDetail.id}:${initialArticleDetail.link}`);
+    } else {
+      setSelectedArticleKey(null);
+    }
+    setPendingArticle(null);
+    setArticleDetail(initialArticleDetail);
+    setIsDetailLoading(initialArticleId !== null && initialArticleDetail === null);
+    if (initialArticleId !== null) {
+      setMobileView('detail');
+    }
+  }, [initialArticleId, initialArticleDetail]);
 
   useEffect(() => {
     let disposed = false;
@@ -70,6 +135,18 @@ function App() {
       };
     }
 
+    if (
+      !consumedServerInitialListRef.current &&
+      initialSelectedDate &&
+      selectedDate === initialSelectedDate
+    ) {
+      consumedServerInitialListRef.current = true;
+      setIsListLoading(false);
+      return () => {
+        disposed = true;
+      };
+    }
+
     const loadArticles = async () => {
       setIsListLoading(true);
       try {
@@ -100,7 +177,7 @@ function App() {
     return () => {
       disposed = true;
     };
-  }, [selectedDate]);
+  }, [selectedDate, initialSelectedDate]);
 
   useEffect(() => {
     let disposed = false;
@@ -113,16 +190,26 @@ function App() {
       };
     }
 
+    if (articleDetail?.id === selectedArticleId) {
+      setIsDetailLoading(false);
+      setPendingArticle(null);
+      return () => {
+        disposed = true;
+      };
+    }
+
     const loadArticleDetail = async () => {
       setIsDetailLoading(true);
       try {
         const response = await fetchArticleDetail(selectedArticleId);
         if (!disposed) {
           setArticleDetail(response);
+          setPendingArticle(null);
         }
       } catch {
         if (!disposed) {
           setArticleDetail(null);
+          setPendingArticle(null);
         }
       } finally {
         if (!disposed) {
@@ -135,7 +222,49 @@ function App() {
     return () => {
       disposed = true;
     };
-  }, [selectedArticleId]);
+  }, [selectedArticleId, articleDetail]);
+
+  useEffect(() => {
+    const publishedDate = normalizeToIsoDate(articleDetail?.publishedDate);
+    if (!publishedDate || selectedDate === publishedDate) {
+      return;
+    }
+
+    setSelectedDate(publishedDate);
+  }, [articleDetail, selectedDate]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentPath = window.location.pathname;
+      const matched = currentPath.match(/^\/news\/(\d+)$/);
+
+      if (!matched) {
+        setSelectedArticleId(null);
+        setPendingArticle(null);
+        setSelectedArticleKey(null);
+        setArticleDetail(null);
+        setIsDetailLoading(false);
+        setMobileView('list');
+        return;
+      }
+
+      const parsedId = Number(matched[1]);
+      if (!Number.isInteger(parsedId) || parsedId <= 0) {
+        return;
+      }
+
+      setPendingArticle(null);
+      setSelectedArticleKey(null);
+      setSelectedArticleId(parsedId);
+      setIsDetailLoading(true);
+      setMobileView('detail');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const handleSelectDate = (date: string) => {
     if (date === selectedDate) {
@@ -153,12 +282,17 @@ function App() {
     setIsFetchingMore(false);
     setMobileView('list');
     setIsDateSheetOpen(false);
+
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/');
+    }
   };
 
   const handleSelectArticle = (article: ArticleListItem) => {
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
     const articleKey = `${article.id ?? 'null'}:${article.link}`;
     if (articleKey === selectedArticleKey) {
-      if (window.matchMedia('(max-width: 767px)').matches) {
+      if (isMobile) {
         setMobileView('detail');
       }
       return;
@@ -175,14 +309,27 @@ function App() {
       setPendingArticle(article);
       setArticleDetail(null);
       setIsDetailLoading(false);
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        window.history.pushState({}, '', '/');
+      }
     } else {
-      setPendingArticle(null);
-      setArticleDetail(null);
+      if (isMobile) {
+        setPendingArticle(article);
+      } else {
+        setPendingArticle(null);
+      }
+      if (isMobile) {
+        setArticleDetail(null);
+      }
       setIsDetailLoading(true);
       setSelectedArticleId(article.id);
+      const targetPath = `/news/${article.id}`;
+      if (typeof window !== 'undefined' && window.location.pathname !== targetPath) {
+        window.history.pushState({}, '', targetPath);
+      }
     }
 
-    if (window.matchMedia('(max-width: 767px)').matches) {
+    if (isMobile) {
       setMobileView('detail');
     }
   };
@@ -230,7 +377,7 @@ function App() {
     <div className="min-h-screen p-4 md:p-6">
       <div className="md:hidden h-[calc(100vh-2rem)] flex flex-col gap-3">
         <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">NewsNexus</p>
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">오늘의 카카오뱅크</p>
           <div className="mt-2 flex items-center justify-between gap-3">
             <h1 className="text-lg font-[650] text-slate-900">
               {mobileView === 'list' ? '기사 목록' : '기사 보기'}

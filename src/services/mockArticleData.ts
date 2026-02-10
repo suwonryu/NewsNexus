@@ -6,7 +6,7 @@ import type {
   IsoDate,
 } from '../types/article';
 
-const SOURCE_NAME = 'NewsNexus Mock';
+const SOURCE_NAME = '오늘의 카카오뱅크';
 const SOURCE_URL = 'https://example.com/mock-article';
 const START_DATE = '2024-07-14';
 const MOCK_ID_BASE = 1738886400000000;
@@ -135,10 +135,13 @@ export function getMockArticlesByDate(
 }
 
 export function getMockArticleDetail(id: number): ArticleDetail | null {
-  for (const articles of Object.values(MOCK_ARTICLES_BY_DATE)) {
+  for (const [date, articles] of Object.entries(MOCK_ARTICLES_BY_DATE)) {
     const target = articles.find((article) => article.id === id);
     if (target) {
-      return target;
+      return {
+        ...target,
+        publishedDate: date,
+      };
     }
   }
 

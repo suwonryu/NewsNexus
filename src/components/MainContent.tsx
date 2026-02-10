@@ -110,18 +110,13 @@ function MainContent({
       <main className={containerClassName}>
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500">Article Detail</p>
         <h1 className="mb-2 text-3xl font-[650] text-slate-900">{pendingArticle.title}</h1>
-        <p className="mb-2 text-sm text-slate-600">뉴스 ID: 준비중</p>
-        <article className="prose prose-slate mt-6 max-w-none font-[420] leading-7 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-3 [&_li]:my-1">
-          <ReactMarkdown>{'요약 준비중입니다.'}</ReactMarkdown>
-        </article>
-        <a
-          href={pendingArticle.link}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-medium md:font-semibold text-white transition hover:bg-cyan-700 hover:border-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2"
-        >
-          원문 보기
-        </a>
+        <p className="mb-4 text-sm text-slate-600">기사 내용을 불러오는 중...</p>
+        <div className="mt-4 space-y-2 animate-pulse">
+          <div className="h-4 w-full rounded bg-slate-200" />
+          <div className="h-4 w-[92%] rounded bg-slate-200" />
+          <div className="h-4 w-[88%] rounded bg-slate-200" />
+          <div className="h-4 w-[74%] rounded bg-slate-200" />
+        </div>
       </main>
     );
   }
@@ -134,7 +129,7 @@ function MainContent({
     );
   }
 
-  if (isLoading) {
+  if (isLoading && !articleDetail) {
     return (
       <main className={containerClassName}>
         <p className="text-slate-600">불러오는 중...</p>

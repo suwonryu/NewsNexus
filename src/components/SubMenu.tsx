@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type MouseEvent, useEffect, useRef } from 'react';
 import type { ArticleListItem } from '../types/article';
 
 interface SubMenuProps {
@@ -25,6 +25,12 @@ function SubMenu({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const todayIsoDate = new Date().toISOString().slice(0, 10);
   const canOpenNullIdArticle = selectedDate === todayIsoDate;
+  const shouldHandleInPlaceNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey;
 
   useEffect(() => {
     if (!selectedDate || !hasMore || isLoading) {
@@ -66,31 +72,47 @@ function SubMenu({
           <ul className="space-y-2">
             {items.map((article) => (
               <li key={`${article.id ?? 'null'}:${article.link}`}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isDisabled = article.id === null && !canOpenNullIdArticle;
-                    if (!isDisabled) {
+                {article.id !== null ? (
+                  <a
+                    href={`/news/${article.id}`}
+                    onClick={(event) => {
+                      if (!shouldHandleInPlaceNavigation(event)) {
+                        return;
+                      }
+                      event.preventDefault();
                       onSelectArticle(article);
-                    }
-                  }}
-                  disabled={article.id === null && !canOpenNullIdArticle}
-                  className={`w-full rounded-xl border p-3 text-left transition ${
-                    selectedArticleKey === `${article.id ?? 'null'}:${article.link}`
-                      ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
-                      : article.id === null && !canOpenNullIdArticle
+                    }}
+                    className={`block w-full rounded-xl border p-3 text-left transition ${
+                      selectedArticleKey === `${article.id}:${article.link}`
+                        ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
+                        : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                    }`}
+                  >
+                    <div className="text-sm font-[650] text-slate-900">{article.title}</div>
+                    <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (canOpenNullIdArticle) {
+                        onSelectArticle(article);
+                      }
+                    }}
+                    disabled={!canOpenNullIdArticle}
+                    className={`w-full rounded-xl border p-3 text-left transition ${
+                      !canOpenNullIdArticle
                         ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                         : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
-                  }`}
-                >
-                  <div className="text-sm font-[650] text-slate-900">{article.title}</div>
-                  <div className="mt-1 text-xs text-slate-600">
-                    {article.sourceName}
-                  </div>
-                  {article.id === null && !canOpenNullIdArticle && (
-                    <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
-                  )}
-                </button>
+                    }`}
+                  >
+                    <div className="text-sm font-[650] text-slate-900">{article.title}</div>
+                    <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                    {!canOpenNullIdArticle && (
+                      <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
+                    )}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
