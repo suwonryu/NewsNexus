@@ -25,6 +25,8 @@ function SubMenu({
   const containerRef = useRef<HTMLElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef(new Map<string, HTMLLIElement>());
+  const previousSelectedKeyRef = useRef<string | null>(null);
+  const previousSelectedItemVisibleRef = useRef(false);
   const todayIsoDate = new Date().toISOString().slice(0, 10);
   const canOpenNullIdArticle = selectedDate === todayIsoDate;
   const shouldHandleInPlaceNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
@@ -59,12 +61,22 @@ function SubMenu({
 
   useEffect(() => {
     if (!selectedArticleKey) {
+      previousSelectedKeyRef.current = null;
+      previousSelectedItemVisibleRef.current = false;
       return;
     }
 
     const container = containerRef.current;
     const selectedItem = itemRefs.current.get(selectedArticleKey);
-    if (!container || !selectedItem) {
+    const selectedKeyChanged = previousSelectedKeyRef.current !== selectedArticleKey;
+    const selectedItemVisible = Boolean(selectedItem);
+    const selectedItemJustAppeared =
+      !previousSelectedItemVisibleRef.current && selectedItemVisible;
+
+    previousSelectedKeyRef.current = selectedArticleKey;
+    previousSelectedItemVisibleRef.current = selectedItemVisible;
+
+    if (!container || !selectedItem || (!selectedKeyChanged && !selectedItemJustAppeared)) {
       return;
     }
 
