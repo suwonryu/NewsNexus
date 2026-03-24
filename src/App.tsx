@@ -38,6 +38,90 @@ function normalizeToIsoDate(date: string | undefined): string | null {
   return null;
 }
 
+function inferIsoDateFromArticleId(id: number): string | null {
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+
+  try {
+    const milliseconds = Number(BigInt(id) / 1000n);
+    const timestamp = new Date(milliseconds);
+
+    if (Number.isNaN(timestamp.getTime())) {
+      return null;
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    return formatter.format(timestamp);
+  } catch {
+    return null;
+  }
+}
+
+function getArticleIsoDate(article: ArticleDetail, fallbackDate: string): string {
+  return (
+    normalizeToIsoDate(article.publishedDate) ??
+    inferIsoDateFromArticleId(article.id) ??
+    fallbackDate
+  );
+}
+
+function getArticleKey(article: Pick<ArticleListItem, 'id' | 'link'>): string {
+  return `${article.id ?? 'null'}:${article.link}`;
+}
+
+function getSourceName(link: string): string {
+  try {
+    return new URL(link).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+function dedupeArticles(items: ArticleListItem[]): ArticleListItem[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = getArticleKey(item);
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function createListItemFromDetail(article: ArticleDetail, fallbackDate: string): ArticleListItem {
+  return {
+    id: article.id,
+    title: article.title,
+    link: article.link,
+    publishedDate: getArticleIsoDate(article, fallbackDate),
+    sourceName: getSourceName(article.link),
+  };
+}
+
+function ensureArticleInList(
+  items: ArticleListItem[],
+  selectedArticle: ArticleListItem,
+): ArticleListItem[] {
+  const dedupedItems = dedupeArticles(items);
+  const selectedArticleKey = getArticleKey(selectedArticle);
+
+  if (dedupedItems.some((item) => getArticleKey(item) === selectedArticleKey)) {
+    return dedupedItems;
+  }
+
+  return [selectedArticle, ...dedupedItems];
+}
+
 interface AppProps {
   initialArticleId?: number | null;
   initialArticleDetail?: ArticleDetail | null;
@@ -81,14 +165,15 @@ function App({
   );
 
   useEffect(() => {
-    const initialPublishedDate = normalizeToIsoDate(initialArticleDetail?.publishedDate);
-    if (initialPublishedDate) {
-      setSelectedDate(initialPublishedDate);
+    const nextSelectedDate =
+      initialSelectedDate ?? normalizeToIsoDate(initialArticleDetail?.publishedDate);
+    if (nextSelectedDate) {
+      setSelectedDate(nextSelectedDate);
     }
 
     setSelectedArticleId(initialArticleId);
     if (initialArticleDetail) {
-      setSelectedArticleKey(`${initialArticleDetail.id}:${initialArticleDetail.link}`);
+      setSelectedArticleKey(getArticleKey(initialArticleDetail));
     } else {
       setSelectedArticleKey(null);
     }
@@ -98,7 +183,7 @@ function App({
     if (initialArticleId !== null) {
       setMobileView('detail');
     }
-  }, [initialArticleId, initialArticleDetail]);
+  }, [initialArticleId, initialArticleDetail, initialSelectedDate]);
 
   useEffect(() => {
     let disposed = false;
@@ -156,7 +241,7 @@ function App({
           return;
         }
 
-        setArticles(response.items);
+        setArticles(dedupeArticles(response.items));
         setNextCursor(response.nextCursor);
         setHasMore(response.hasNext);
       } catch {
@@ -225,13 +310,26 @@ function App({
   }, [selectedArticleId, articleDetail]);
 
   useEffect(() => {
-    const publishedDate = normalizeToIsoDate(articleDetail?.publishedDate);
-    if (!publishedDate || selectedDate === publishedDate) {
+    if (!articleDetail || articleDetail.id !== selectedArticleId) {
       return;
     }
 
-    setSelectedDate(publishedDate);
-  }, [articleDetail, selectedDate]);
+    const articleDate = getArticleIsoDate(
+      articleDetail,
+      selectedDate ?? initialSelectedDate ?? getTodayIsoDate(),
+    );
+    if (selectedDate !== articleDate) {
+      setSelectedDate(articleDate);
+    }
+
+    const selectedArticle = createListItemFromDetail(
+      articleDetail,
+      selectedDate ?? initialSelectedDate ?? getTodayIsoDate(),
+    );
+
+    setSelectedArticleKey(getArticleKey(selectedArticle));
+    setArticles((prev) => ensureArticleInList(prev, selectedArticle));
+  }, [articleDetail, initialSelectedDate, selectedArticleId, selectedDate]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -290,7 +388,7 @@ function App({
 
   const handleSelectArticle = (article: ArticleListItem) => {
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    const articleKey = `${article.id ?? 'null'}:${article.link}`;
+    const articleKey = getArticleKey(article);
     if (articleKey === selectedArticleKey) {
       if (isMobile) {
         setMobileView('detail');
@@ -342,7 +440,7 @@ function App({
     setIsFetchingMore(true);
     try {
       const response = await fetchArticlesByDate(selectedDate, nextCursor);
-      setArticles((prev) => [...prev, ...response.items]);
+      setArticles((prev) => dedupeArticles([...prev, ...response.items]));
       setNextCursor(response.nextCursor);
       setHasMore(response.hasNext);
     } catch {

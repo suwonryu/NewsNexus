@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import App from '../../../src/App';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
+import type { ArticleDetail, ArticleListItem } from '../../../src/types/article';
 import { getArticleDetail, getArticlesByDate } from '../../../src/services/articleServerApi';
 
 interface ArticlePageProps {
@@ -92,8 +93,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  const selectedDate = normalizeToIsoDate(article.publishedDate) ?? getTodayIsoDate();
+  const selectedDate = getArticleIsoDate(article, getTodayIsoDate());
   const response = await getArticlesByDate(selectedDate, null);
+  const initialArticles = ensureArticleInList(
+    response.items,
+    createListItemFromDetail(article, selectedDate),
+  );
   const siteUrl = getSiteUrl();
   const canonical = `${siteUrl}/news/${parsedId}`;
   const structuredData = {
@@ -132,7 +137,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         initialArticleId={parsedId}
         initialArticleDetail={article}
         initialSelectedDate={selectedDate}
-        initialArticles={response.items}
+        initialArticles={initialArticles}
         initialNextCursor={response.nextCursor}
         initialHasMore={response.hasNext}
       />
@@ -170,6 +175,75 @@ function normalizeToIsoDate(date: string | undefined): string | null {
   }
 
   return null;
+}
+
+function inferIsoDateFromArticleId(id: number): string | null {
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+
+  try {
+    const milliseconds = Number(BigInt(id) / 1000n);
+    const timestamp = new Date(milliseconds);
+
+    if (Number.isNaN(timestamp.getTime())) {
+      return null;
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    return formatter.format(timestamp);
+  } catch {
+    return null;
+  }
+}
+
+function getArticleIsoDate(article: ArticleDetail, fallbackDate: string): string {
+  return (
+    normalizeToIsoDate(article.publishedDate) ??
+    inferIsoDateFromArticleId(article.id) ??
+    fallbackDate
+  );
+}
+
+function getArticleKey(article: Pick<ArticleListItem, 'id' | 'link'>): string {
+  return `${article.id ?? 'null'}:${article.link}`;
+}
+
+function getSourceName(link: string): string {
+  try {
+    return new URL(link).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
+function createListItemFromDetail(article: ArticleDetail, fallbackDate: string): ArticleListItem {
+  return {
+    id: article.id,
+    title: article.title,
+    link: article.link,
+    publishedDate: getArticleIsoDate(article, fallbackDate),
+    sourceName: getSourceName(article.link),
+  };
+}
+
+function ensureArticleInList(
+  items: ArticleListItem[],
+  selectedArticle: ArticleListItem,
+): ArticleListItem[] {
+  const selectedArticleKey = getArticleKey(selectedArticle);
+
+  if (items.some((item) => getArticleKey(item) === selectedArticleKey)) {
+    return items;
+  }
+
+  return [selectedArticle, ...items];
 }
 
 function getTodayIsoDate(): string {
