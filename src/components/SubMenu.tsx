@@ -68,7 +68,6 @@ function SubMenu({
 
     const container = containerRef.current;
     const selectedItem = itemRefs.current.get(selectedArticleKey);
-    const selectedKeyChanged = previousSelectedKeyRef.current !== selectedArticleKey;
     const selectedItemVisible = Boolean(selectedItem);
     const selectedItemJustAppeared =
       !previousSelectedItemVisibleRef.current && selectedItemVisible;
@@ -76,7 +75,7 @@ function SubMenu({
     previousSelectedKeyRef.current = selectedArticleKey;
     previousSelectedItemVisibleRef.current = selectedItemVisible;
 
-    if (!container || !selectedItem || (!selectedKeyChanged && !selectedItemJustAppeared)) {
+    if (!container || !selectedItem || !selectedItemJustAppeared) {
       return;
     }
 
