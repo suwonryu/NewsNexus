@@ -285,21 +285,12 @@ function App({
     const loadArticles = async () => {
       setIsListLoading(true);
       try {
-        const response = shouldRestoreArticlePosition(articleDetail, selectedArticleId, selectedDate)
-          ? await fetchArticlesThroughOffset(selectedDate, articleDetail.offset)
-          : await (async () => {
-              const listResponse = await fetchArticlesByDate(
-                selectedDate,
-                null,
-                ARTICLE_LIST_PAGE_SIZE,
-              );
-
-              return {
-                items: listResponse.items,
-                nextCursor: listResponse.nextCursor,
-                hasMore: listResponse.hasNext,
-              };
-            })();
+        const listResponse = await fetchArticlesByDate(selectedDate, null, ARTICLE_LIST_PAGE_SIZE);
+        const response = {
+          items: listResponse.items,
+          nextCursor: listResponse.nextCursor,
+          hasMore: listResponse.hasNext,
+        };
 
         if (disposed) {
           return;
@@ -326,7 +317,59 @@ function App({
     return () => {
       disposed = true;
     };
-  }, [articleDetail, initialSelectedDate, selectedArticleId, selectedDate]);
+  }, [initialSelectedDate, selectedDate]);
+
+  useEffect(() => {
+    let disposed = false;
+
+    if (!shouldRestoreArticlePosition(articleDetail, selectedArticleId, selectedDate)) {
+      return () => {
+        disposed = true;
+      };
+    }
+
+    const selectedArticleKey = getArticleKey(articleDetail);
+    if (articles.some((item) => getArticleKey(item) === selectedArticleKey)) {
+      return () => {
+        disposed = true;
+      };
+    }
+
+    const restoreDate = selectedDate;
+    if (!restoreDate) {
+      return () => {
+        disposed = true;
+      };
+    }
+
+    const restoreArticlePosition = async () => {
+      setIsListLoading(true);
+      try {
+        const response = await fetchArticlesThroughOffset(restoreDate, articleDetail.offset);
+        if (disposed) {
+          return;
+        }
+
+        setArticles(response.items);
+        setNextCursor(response.nextCursor);
+        setHasMore(response.hasMore);
+      } catch {
+        if (!disposed) {
+          setHasMore(false);
+        }
+      } finally {
+        if (!disposed) {
+          setIsListLoading(false);
+          setIsFetchingMore(false);
+        }
+      }
+    };
+
+    void restoreArticlePosition();
+    return () => {
+      disposed = true;
+    };
+  }, [articleDetail, articles, selectedArticleId, selectedDate]);
 
   useEffect(() => {
     let disposed = false;
