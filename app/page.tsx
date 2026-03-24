@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import App from '../src/App';
 import { getArticlesByDate } from '../src/services/articleServerApi';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
 
 function getTodayIsoDate(): string {
   const now = new Date();
