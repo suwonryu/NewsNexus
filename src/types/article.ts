@@ -38,6 +38,8 @@ export interface ArticleDetail {
   title: string;
   link: string;
   publishedDate?: IsoDate;
+  offset?: number;
+  cursor?: string | null;
   summary: string | null;
   sentiment: string | null;
 }

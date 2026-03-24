@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import App from '../../../src/App';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
-import type { ArticleDetail, ArticleListItem } from '../../../src/types/article';
+import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
 import { getArticleDetail, getArticlesByDate } from '../../../src/services/articleServerApi';
+
+const ARTICLE_LIST_PAGE_SIZE = 20;
 
 interface ArticlePageProps {
   params: Promise<{ id: string }>;
@@ -94,7 +96,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   const selectedDate = getArticleIsoDate(article, getTodayIsoDate());
-  const response = await getArticlesByDate(selectedDate, null);
+  const response = await getArticlesForInitialRender(selectedDate, article);
   const initialArticles = ensureArticleInList(
     response.items,
     createListItemFromDetail(article, selectedDate),
@@ -139,7 +141,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         initialSelectedDate={selectedDate}
         initialArticles={initialArticles}
         initialNextCursor={response.nextCursor}
-        initialHasMore={response.hasNext}
+        initialHasMore={response.hasMore}
       />
     </>
   );
@@ -244,6 +246,48 @@ function ensureArticleInList(
   }
 
   return [selectedArticle, ...items];
+}
+
+async function getArticlesForInitialRender(
+  date: IsoDate,
+  article: ArticleDetail,
+): Promise<{
+  items: ArticleListItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}> {
+  if (typeof article.offset !== 'number' || article.offset < 0) {
+    const response = await getArticlesByDate(date, null, ARTICLE_LIST_PAGE_SIZE);
+    return {
+      items: response.items,
+      nextCursor: response.nextCursor,
+      hasMore: response.hasNext,
+    };
+  }
+
+  let cursor: string | null = null;
+  let aggregatedItems: ArticleListItem[] = [];
+  let nextCursor: string | null = null;
+  let hasMore = false;
+
+  do {
+    const response = await getArticlesByDate(date, cursor, ARTICLE_LIST_PAGE_SIZE);
+    aggregatedItems = [...aggregatedItems, ...response.items];
+    nextCursor = response.nextCursor;
+    hasMore = response.hasNext;
+
+    if (aggregatedItems.length > article.offset || !response.nextCursor) {
+      break;
+    }
+
+    cursor = response.nextCursor;
+  } while (cursor);
+
+  return {
+    items: aggregatedItems,
+    nextCursor,
+    hasMore,
+  };
 }
 
 function getTodayIsoDate(): string {

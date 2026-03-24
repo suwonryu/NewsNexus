@@ -23,11 +23,13 @@ interface KabangListResponse {
 
 interface KabangDetailResponse {
   id: number;
+  date?: string | null;
+  offset?: number | null;
+  cursor?: string | null;
   title: string;
   link: string;
   summary: string | null;
   sentiment: string | null;
-  date?: string | null;
   publishedDate?: string | null;
 }
 
@@ -168,6 +170,8 @@ function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail 
     id: response.id,
     title: response.title,
     link: response.link,
+    offset: typeof response.offset === 'number' ? response.offset : undefined,
+    cursor: response.cursor ?? null,
     summary: response.summary,
     sentiment: response.sentiment,
     publishedDate: response.publishedDate

@@ -9,7 +9,9 @@ import {
   fetchArticlesByDate,
   fetchDateTree,
 } from './services/articleApi';
-import type { ArticleDetail, ArticleListItem, DateTreeYear } from './types/article';
+import type { ArticleDetail, ArticleListItem, DateTreeYear, IsoDate } from './types/article';
+
+const ARTICLE_LIST_PAGE_SIZE = 20;
 
 function getTodayIsoDate(): string {
   const now = new Date();
@@ -120,6 +122,54 @@ function ensureArticleInList(
   }
 
   return [selectedArticle, ...dedupedItems];
+}
+
+function shouldRestoreArticlePosition(
+  article: ArticleDetail | null,
+  selectedArticleId: number | null,
+  selectedDate: string | null,
+): article is ArticleDetail & { offset: number } {
+  return (
+    article !== null &&
+    article.id === selectedArticleId &&
+    selectedDate !== null &&
+    typeof article.offset === 'number' &&
+    article.offset >= 0 &&
+    getArticleIsoDate(article, selectedDate) === selectedDate
+  );
+}
+
+async function fetchArticlesThroughOffset(
+  date: IsoDate,
+  offset: number,
+): Promise<{
+  items: ArticleListItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}> {
+  let cursor: string | null = null;
+  let aggregatedItems: ArticleListItem[] = [];
+  let nextCursor: string | null = null;
+  let hasMore = false;
+
+  do {
+    const response = await fetchArticlesByDate(date, cursor, ARTICLE_LIST_PAGE_SIZE);
+    aggregatedItems = dedupeArticles([...aggregatedItems, ...response.items]);
+    nextCursor = response.nextCursor;
+    hasMore = response.hasNext;
+
+    if (aggregatedItems.length > offset || !response.nextCursor) {
+      break;
+    }
+
+    cursor = response.nextCursor;
+  } while (cursor);
+
+  return {
+    items: aggregatedItems,
+    nextCursor,
+    hasMore,
+  };
 }
 
 interface AppProps {
@@ -235,7 +285,21 @@ function App({
     const loadArticles = async () => {
       setIsListLoading(true);
       try {
-        const response = await fetchArticlesByDate(selectedDate, null);
+        const response = shouldRestoreArticlePosition(articleDetail, selectedArticleId, selectedDate)
+          ? await fetchArticlesThroughOffset(selectedDate, articleDetail.offset)
+          : await (async () => {
+              const listResponse = await fetchArticlesByDate(
+                selectedDate,
+                null,
+                ARTICLE_LIST_PAGE_SIZE,
+              );
+
+              return {
+                items: listResponse.items,
+                nextCursor: listResponse.nextCursor,
+                hasMore: listResponse.hasNext,
+              };
+            })();
 
         if (disposed) {
           return;
@@ -243,7 +307,7 @@ function App({
 
         setArticles(dedupeArticles(response.items));
         setNextCursor(response.nextCursor);
-        setHasMore(response.hasNext);
+        setHasMore(response.hasMore);
       } catch {
         if (!disposed) {
           setArticles([]);
@@ -262,7 +326,7 @@ function App({
     return () => {
       disposed = true;
     };
-  }, [selectedDate, initialSelectedDate]);
+  }, [articleDetail, initialSelectedDate, selectedArticleId, selectedDate]);
 
   useEffect(() => {
     let disposed = false;
@@ -320,6 +384,7 @@ function App({
     );
     if (selectedDate !== articleDate) {
       setSelectedDate(articleDate);
+      return;
     }
 
     const selectedArticle = createListItemFromDetail(
@@ -328,7 +393,9 @@ function App({
     );
 
     setSelectedArticleKey(getArticleKey(selectedArticle));
-    setArticles((prev) => ensureArticleInList(prev, selectedArticle));
+    if (typeof articleDetail.offset !== 'number') {
+      setArticles((prev) => ensureArticleInList(prev, selectedArticle));
+    }
   }, [articleDetail, initialSelectedDate, selectedArticleId, selectedDate]);
 
   useEffect(() => {

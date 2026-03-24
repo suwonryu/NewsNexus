@@ -22,7 +22,9 @@ function SubMenu({
   onLoadMore,
   className,
 }: SubMenuProps) {
+  const containerRef = useRef<HTMLElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef(new Map<string, HTMLLIElement>());
   const todayIsoDate = new Date().toISOString().slice(0, 10);
   const canOpenNullIdArticle = selectedDate === todayIsoDate;
   const shouldHandleInPlaceNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
@@ -55,8 +57,30 @@ function SubMenu({
     return () => observer.disconnect();
   }, [selectedDate, hasMore, isLoading, onLoadMore]);
 
+  useEffect(() => {
+    if (!selectedArticleKey) {
+      return;
+    }
+
+    const container = containerRef.current;
+    const selectedItem = itemRefs.current.get(selectedArticleKey);
+    if (!container || !selectedItem) {
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = selectedItem.getBoundingClientRect();
+    const isAboveViewport = itemRect.top < containerRect.top + 16;
+    const isBelowViewport = itemRect.bottom > containerRect.bottom - 16;
+
+    if (isAboveViewport || isBelowViewport) {
+      selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [items.length, selectedArticleKey]);
+
   return (
     <aside
+      ref={containerRef}
       className={`overflow-y-auto rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
     >
       <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Stories</p>
@@ -70,51 +94,64 @@ function SubMenu({
             {selectedDate}
           </p>
           <ul className="space-y-2">
-            {items.map((article) => (
-              <li key={`${article.id ?? 'null'}:${article.link}`}>
-                {article.id !== null ? (
-                  <a
-                    href={`/news/${article.id}`}
-                    onClick={(event) => {
-                      if (!shouldHandleInPlaceNavigation(event)) {
-                        return;
-                      }
-                      event.preventDefault();
-                      onSelectArticle(article);
-                    }}
-                    className={`block w-full rounded-xl border p-3 text-left transition ${
-                      selectedArticleKey === `${article.id}:${article.link}`
-                        ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
-                        : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
-                    }`}
-                  >
-                    <div className="text-sm font-[650] text-slate-900">{article.title}</div>
-                    <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (canOpenNullIdArticle) {
+            {items.map((article) => {
+              const articleKey = `${article.id ?? 'null'}:${article.link}`;
+
+              return (
+                <li
+                  key={articleKey}
+                  ref={(node) => {
+                    if (node) {
+                      itemRefs.current.set(articleKey, node);
+                    } else {
+                      itemRefs.current.delete(articleKey);
+                    }
+                  }}
+                >
+                  {article.id !== null ? (
+                    <a
+                      href={`/news/${article.id}`}
+                      onClick={(event) => {
+                        if (!shouldHandleInPlaceNavigation(event)) {
+                          return;
+                        }
+                        event.preventDefault();
                         onSelectArticle(article);
-                      }
-                    }}
-                    disabled={!canOpenNullIdArticle}
-                    className={`w-full rounded-xl border p-3 text-left transition ${
-                      !canOpenNullIdArticle
-                        ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                        : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
-                    }`}
-                  >
-                    <div className="text-sm font-[650] text-slate-900">{article.title}</div>
-                    <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
-                    {!canOpenNullIdArticle && (
-                      <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
-                    )}
-                  </button>
-                )}
-              </li>
-            ))}
+                      }}
+                      className={`block w-full rounded-xl border p-3 text-left transition ${
+                        selectedArticleKey === `${article.id}:${article.link}`
+                          ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
+                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                      }`}
+                    >
+                      <div className="text-sm font-[650] text-slate-900">{article.title}</div>
+                      <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (canOpenNullIdArticle) {
+                          onSelectArticle(article);
+                        }
+                      }}
+                      disabled={!canOpenNullIdArticle}
+                      className={`w-full rounded-xl border p-3 text-left transition ${
+                        !canOpenNullIdArticle
+                          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                      }`}
+                    >
+                      <div className="text-sm font-[650] text-slate-900">{article.title}</div>
+                      <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                      {!canOpenNullIdArticle && (
+                        <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
+                      )}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
 
           {isLoading && <p className="mt-3 text-xs text-slate-500">불러오는 중...</p>}
