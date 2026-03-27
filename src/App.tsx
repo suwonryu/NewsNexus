@@ -542,6 +542,14 @@ function App({
     }
   };
 
+  const handleShowArticleList = useCallback(() => {
+    setMobileView('list');
+
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/');
+    }
+  }, []);
+
   const handleLoadMore = useCallback(async () => {
     if (!selectedDate || !nextCursor || isListLoading || isFetchingMore) {
       return;
@@ -630,7 +638,7 @@ function App({
             <div className="flex h-full flex-col gap-2">
               <button
                 type="button"
-                onClick={() => setMobileView('list')}
+                onClick={handleShowArticleList}
                 className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
               >
                 목록으로
