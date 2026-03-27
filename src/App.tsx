@@ -21,6 +21,14 @@ function getTodayIsoDate(): string {
   return `${year}-${month}-${day}`;
 }
 
+function getBriefingHref(date: string | null): string {
+  return `/briefing/${date ?? getTodayIsoDate()}`;
+}
+
+function isCurrentIsoDate(date: string | null): boolean {
+  return date === getTodayIsoDate();
+}
+
 function normalizeToIsoDate(date: string | undefined): string | null {
   if (!date) {
     return null;
@@ -598,13 +606,23 @@ function App({
             <h1 className="text-lg font-[650] text-slate-900">
               {mobileView === 'list' ? '기사 목록' : '기사 보기'}
             </h1>
-            <button
-              type="button"
-              onClick={() => setIsDateSheetOpen(true)}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
-            >
-              {selectedDate ?? '날짜 선택'}
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedDate && (
+                <a
+                  href={getBriefingHref(selectedDate)}
+                  className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100"
+                >
+                  {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsDateSheetOpen(true)}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
+              >
+                {selectedDate ?? '날짜 선택'}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -656,7 +674,26 @@ function App({
         </div>
       </div>
 
-      <div className="hidden md:grid h-[calc(100vh-3rem)] grid-cols-[260px_360px_1fr] gap-3">
+      <div className="mb-3 hidden items-center justify-between md:flex">
+        <div>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Overview</p>
+          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950">
+            기사 탐색
+          </h1>
+        </div>
+        {selectedDate && (
+          <a
+            href={getBriefingHref(selectedDate)}
+            className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] hover:border-cyan-400 hover:bg-cyan-100"
+          >
+            {isCurrentIsoDate(selectedDate)
+              ? `${selectedDate} 브리핑 준비 중`
+              : `${selectedDate} 브리핑 보기`}
+          </a>
+        )}
+      </div>
+
+      <div className="hidden md:grid h-[calc(100vh-7rem)] grid-cols-[260px_360px_1fr] gap-3">
         <MainMenu
           dateTree={dateTree}
           selectedDate={selectedDate}

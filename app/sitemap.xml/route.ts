@@ -6,7 +6,7 @@ export async function GET() {
   const totalChunks = await getSitemapChunkCount();
 
   const chunks = Array.from({ length: totalChunks }, (_, id) => {
-    const url = `${siteUrl}/sitemap/${id}.xml`;
+    const url = `${siteUrl}/sitemap/${id}`;
     return `<sitemap><loc>${escapeXml(url)}</loc></sitemap>`;
   }).join('');
 

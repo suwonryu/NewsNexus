@@ -1,8 +1,16 @@
 import type { ArticleDetail, ArticleListResponse, IsoDate } from '../types/article';
 import { getMockArticleDetail, getMockArticlesByDate } from './mockArticleData';
+import type {
+  DailyBriefingKeywordDetail,
+  DailyBriefingResponse,
+} from './dailyBriefing';
+import { buildFallbackDailyBriefingResponse } from './dailyBriefing';
 
-const KABANG_API_BASE = 'https://fury.kabang.app/v2/kabang/new';
+const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
+const KABANG_ARTICLE_API_BASE = `${KABANG_API_ROOT}/new`;
+const KABANG_BRIEFING_API_BASE = `${KABANG_API_ROOT}/briefings`;
 const REVALIDATE_SECONDS = 300;
+const BRIEFING_REVALIDATE_SECONDS = 3600;
 
 interface KabangListItem {
   id: number | null;
@@ -33,8 +41,11 @@ interface KabangDetailResponse {
   publishedDate?: string | null;
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+async function getJson<T>(
+  url: string,
+  init?: RequestInit & { next?: { revalidate: number } },
+): Promise<T> {
+  const response = await fetch(url, init);
 
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
@@ -45,7 +56,9 @@ async function getJson<T>(url: string): Promise<T> {
 
 export async function getArticleDetail(id: number): Promise<ArticleDetail | null> {
   try {
-    const response = await getJson<KabangDetailResponse>(`${KABANG_API_BASE}/${id}`);
+    const response = await getJson<KabangDetailResponse>(`${KABANG_ARTICLE_API_BASE}/${id}`, {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
     return mapKabangDetailResponse(response);
   } catch {
     return getMockArticleDetail(id);
@@ -65,10 +78,35 @@ export async function getArticlesByDate(
   }
 
   try {
-    const response = await getJson<KabangListResponse>(`${KABANG_API_BASE}?${params.toString()}`);
+    const response = await getJson<KabangListResponse>(
+      `${KABANG_ARTICLE_API_BASE}?${params.toString()}`,
+      {
+        next: { revalidate: REVALIDATE_SECONDS },
+      },
+    );
     return mapKabangListResponse(response);
   } catch {
     return getMockArticlesByDate(date, cursor, size);
+  }
+}
+
+export async function getDailyBriefing(date: IsoDate): Promise<DailyBriefingResponse> {
+  const fetchOptions = isCurrentIsoDate(date)
+    ? ({ cache: 'no-store' } satisfies RequestInit)
+    : ({ next: { revalidate: BRIEFING_REVALIDATE_SECONDS } } satisfies RequestInit & {
+        next: { revalidate: number };
+      });
+
+  try {
+    const response = await getJson<DailyBriefingResponse>(
+      `${KABANG_BRIEFING_API_BASE}/${date}`,
+      fetchOptions,
+    );
+
+    return normalizeDailyBriefingResponse(response, date);
+  } catch {
+    const fallbackArticles = getMockArticlesByDate(date, null, 100).items;
+    return buildFallbackDailyBriefingResponse(date, fallbackArticles);
   }
 }
 
@@ -191,4 +229,48 @@ function getIsoDateWithOffset(dayOffset: number): IsoDate {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+}
+
+function normalizeDailyBriefingResponse(
+  response: DailyBriefingResponse,
+  requestedDate: IsoDate,
+): DailyBriefingResponse {
+  return {
+    date: response.date || requestedDate,
+    status: response.status,
+    summary: response.summary ?? null,
+    articleCount: response.articleCount ?? 0,
+    sourceCount: response.sourceCount ?? 0,
+    keywords: response.keywords ?? [],
+    keywordDetails: normalizeKeywordDetails(response.keywordDetails),
+    sourceNames: response.sourceNames ?? [],
+    featuredArticles: response.featuredArticles ?? [],
+    generatedAt: response.generatedAt ?? null,
+  };
+}
+
+function isCurrentIsoDate(date: string): boolean {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return date === `${year}-${month}-${day}`;
+}
+
+function normalizeKeywordDetails(
+  keywordDetails: DailyBriefingResponse['keywordDetails'],
+): DailyBriefingKeywordDetail[] {
+  if (!Array.isArray(keywordDetails)) {
+    return [];
+  }
+
+  return keywordDetails.filter(
+    (item): item is DailyBriefingKeywordDetail =>
+      Boolean(item) &&
+      typeof item.keyword === 'string' &&
+      item.keyword.length > 0 &&
+      typeof item.description === 'string' &&
+      item.description.length > 0,
+  );
 }
