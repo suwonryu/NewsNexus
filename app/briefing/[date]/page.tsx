@@ -2,6 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_OG_IMAGE_PATH,
+  SITE_NAME,
+} from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type {
   DailyBriefingArticle,
@@ -22,7 +27,17 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   if (!isValidIsoDate(date)) {
     return {
       title: '브리핑을 찾을 수 없습니다',
+      description: '요청한 날짜의 브리핑 페이지를 찾을 수 없습니다.',
       alternates: { canonical },
+      openGraph: buildBriefingOpenGraph({
+        title: '브리핑을 찾을 수 없습니다',
+        description: '요청한 날짜의 브리핑 페이지를 찾을 수 없습니다.',
+        canonical,
+      }),
+      twitter: buildTwitterMetadata(
+        '브리핑을 찾을 수 없습니다',
+        '요청한 날짜의 브리핑 페이지를 찾을 수 없습니다.',
+      ),
       robots: { index: false, follow: false },
     };
   }
@@ -34,6 +49,15 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
       title: `${date} 브리핑 준비 중`,
       description: `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
       alternates: { canonical },
+      openGraph: buildBriefingOpenGraph({
+        title: `${date} 브리핑 준비 중`,
+        description: `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
+        canonical,
+      }),
+      twitter: buildTwitterMetadata(
+        `${date} 브리핑 준비 중`,
+        `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
+      ),
       robots: { index: false, follow: false },
     };
   }
@@ -43,6 +67,15 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
       title: `${date} 브리핑을 찾을 수 없습니다`,
       description: `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
       alternates: { canonical },
+      openGraph: buildBriefingOpenGraph({
+        title: `${date} 브리핑을 찾을 수 없습니다`,
+        description: `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
+        canonical,
+      }),
+      twitter: buildTwitterMetadata(
+        `${date} 브리핑을 찾을 수 없습니다`,
+        `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
+      ),
       robots: { index: false, follow: false },
     };
   }
@@ -55,17 +88,13 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
     alternates: { canonical },
     robots: { index: true, follow: true },
     openGraph: {
-      title: `${date} 브리핑`,
-      description,
-      url: canonical,
-      type: 'article',
+      ...buildBriefingOpenGraph({
+        title: `${date} 브리핑`,
+        description,
+        canonical,
+      }),
     },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${date} 브리핑`,
-      description,
-      images: ['/og-kabang-summary.svg'],
-    },
+    twitter: buildTwitterMetadata(`${date} 브리핑`, description),
   };
 }
 
@@ -188,6 +217,38 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
       </div>
     </div>
   );
+}
+
+function buildBriefingOpenGraph({
+  title,
+  description,
+  canonical,
+}: {
+  title: string;
+  description: string;
+  canonical: string;
+}): NonNullable<Metadata['openGraph']> {
+  return {
+    title,
+    description,
+    url: canonical,
+    type: 'article',
+    siteName: SITE_NAME,
+    locale: 'ko_KR',
+    images: [DEFAULT_OG_IMAGE],
+  };
+}
+
+function buildTwitterMetadata(
+  title: string,
+  description: string,
+): NonNullable<Metadata['twitter']> {
+  return {
+    card: 'summary_large_image',
+    title,
+    description,
+    images: [DEFAULT_OG_IMAGE_PATH],
+  };
 }
 
 function PreparingBriefingState({ date }: { date: string }) {

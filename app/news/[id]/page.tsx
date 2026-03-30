@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import App from '../../../src/App';
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_OG_IMAGE_PATH,
+  SITE_NAME,
+} from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
 import { getArticleDetail, getArticlesByDate } from '../../../src/services/articleServerApi';
@@ -17,14 +22,21 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const { id } = await params;
   const parsedId = Number(id);
   const siteUrl = getSiteUrl();
+  const invalidCanonical = `${siteUrl}/news/${id}`;
 
   if (!Number.isInteger(parsedId) || parsedId <= 0) {
     return {
       title: '기사를 찾을 수 없습니다',
       description: DEFAULT_DESCRIPTION,
       alternates: {
-        canonical: `${siteUrl}/news/${id}`,
+        canonical: invalidCanonical,
       },
+      openGraph: buildArticleOpenGraph({
+        title: '기사를 찾을 수 없습니다',
+        description: DEFAULT_DESCRIPTION,
+        canonical: invalidCanonical,
+      }),
+      twitter: buildTwitterMetadata('기사를 찾을 수 없습니다', DEFAULT_DESCRIPTION),
       robots: {
         index: false,
         follow: false,
@@ -41,6 +53,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       alternates: {
         canonical: `${siteUrl}/news/${parsedId}`,
       },
+      openGraph: buildArticleOpenGraph({
+        title: '기사를 찾을 수 없습니다',
+        description: DEFAULT_DESCRIPTION,
+        canonical: `${siteUrl}/news/${parsedId}`,
+      }),
+      twitter: buildTwitterMetadata('기사를 찾을 수 없습니다', DEFAULT_DESCRIPTION),
       robots: {
         index: false,
         follow: false,
@@ -59,25 +77,13 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       canonical,
     },
     openGraph: {
-      title: summaryTitle,
-      description,
-      url: canonical,
-      type: 'article',
-      images: [
-        {
-          url: '/og-kabang-summary.svg',
-          width: 1200,
-          height: 630,
-          alt: '오늘의 카카오뱅크',
-        },
-      ],
+      ...buildArticleOpenGraph({
+        title: summaryTitle,
+        description,
+        canonical,
+      }),
     },
-    twitter: {
-      card: 'summary_large_image',
-      title: summaryTitle,
-      description,
-      images: ['/og-kabang-summary.svg'],
-    },
+    twitter: buildTwitterMetadata(summaryTitle, description),
   };
 }
 
@@ -158,6 +164,38 @@ function getDescription(summary: string | null): string {
   }
 
   return normalized.slice(0, 160);
+}
+
+function buildArticleOpenGraph({
+  title,
+  description,
+  canonical,
+}: {
+  title: string;
+  description: string;
+  canonical: string;
+}): NonNullable<Metadata['openGraph']> {
+  return {
+    title,
+    description,
+    url: canonical,
+    type: 'article',
+    siteName: SITE_NAME,
+    locale: 'ko_KR',
+    images: [DEFAULT_OG_IMAGE],
+  };
+}
+
+function buildTwitterMetadata(
+  title: string,
+  description: string,
+): NonNullable<Metadata['twitter']> {
+  return {
+    card: 'summary_large_image',
+    title,
+    description,
+    images: [DEFAULT_OG_IMAGE_PATH],
+  };
 }
 
 function normalizeToIsoDate(date: string | undefined): string | null {
