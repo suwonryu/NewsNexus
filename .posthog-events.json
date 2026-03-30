@@ -1,0 +1,42 @@
+[
+  {
+    "event": "date_selected",
+    "description": "User selects a date from the date tree in the main menu to browse articles for that day",
+    "file": "src/App.tsx"
+  },
+  {
+    "event": "article_selected",
+    "description": "User clicks an article from the article list to view its summary in the main content area",
+    "file": "src/App.tsx"
+  },
+  {
+    "event": "article_original_link_clicked",
+    "description": "User clicks the '원문 보기' (View Original) link to open the source article in a new tab",
+    "file": "src/components/MainContent.tsx"
+  },
+  {
+    "event": "article_list_load_more",
+    "description": "User triggers loading more articles via infinite scroll sentinel in the article list",
+    "file": "src/App.tsx"
+  },
+  {
+    "event": "briefing_link_clicked",
+    "description": "User clicks the daily briefing link shown when a date is selected in the main app",
+    "file": "src/App.tsx"
+  },
+  {
+    "event": "briefing_article_clicked",
+    "description": "User clicks a featured article card on the briefing page, either navigating to internal summary or external source",
+    "file": "app/briefing/[date]/page.tsx"
+  },
+  {
+    "event": "mobile_article_list_opened",
+    "description": "User taps the back/list button on mobile to return from article detail view to the article list",
+    "file": "src/App.tsx"
+  },
+  {
+    "event": "mobile_date_sheet_opened",
+    "description": "User opens the date selector sheet on mobile (hamburger/calendar button)",
+    "file": "src/App.tsx"
+  }
+]

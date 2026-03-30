@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
 import {
   DEFAULT_OG_IMAGE,
@@ -8,10 +9,7 @@ import {
   SITE_NAME,
 } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
-import type {
-  DailyBriefingArticle,
-  DailyBriefingResponse,
-} from '../../../src/services/dailyBriefing';
+import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
 import type { IsoDate } from '../../../src/types/article';
 
@@ -156,7 +154,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {briefing.featuredArticles.map((article, index) => (
-                <ArticleActionCard
+                <BriefingArticleCard
                   key={`${article.id ?? 'null'}:${article.link}`}
                   article={article}
                   index={index}
@@ -373,53 +371,6 @@ function NotFoundBriefingState({ date }: { date: string }) {
   );
 }
 
-function ArticleActionCard({
-  article,
-  index,
-}: {
-  article: DailyBriefingArticle;
-  index: number;
-}) {
-  const className =
-    'group flex h-full flex-col rounded-[28px] border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.94))] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition hover:border-cyan-300 hover:shadow-[0_16px_36px_rgba(8,145,178,0.12)]';
-
-  const content = (
-    <>
-      <div className="mt-3 flex min-h-[6.25rem] items-start gap-3">
-        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-xs font-semibold text-white">
-          {index + 1}
-        </span>
-        <div className="flex min-h-[6.25rem] flex-1 flex-col">
-          <h3 className="text-lg font-[680] leading-7 tracking-[-0.03em] text-slate-950">
-            {article.title}
-          </h3>
-          <div className="mt-3 break-all text-xs text-slate-500 lowercase">
-            {article.sourceName}
-          </div>
-          <div className="mt-auto pt-4">
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 group-hover:bg-cyan-50 group-hover:text-cyan-800">
-              {article.id !== null ? '요약 기사 보기' : '원문 열기'}
-            </span>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
-  if (article.id !== null) {
-    return (
-      <Link href={`/news/${article.id}`} className={className}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <a href={article.link} target="_blank" rel="noreferrer" className={className}>
-      {content}
-    </a>
-  );
-}
 
 function StatusCard({
   label,
