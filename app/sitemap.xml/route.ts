@@ -1,5 +1,10 @@
 import { getSiteUrl } from '../../src/lib/siteUrl';
-import { getSitemapChunkCount } from '../../src/services/sitemapService';
+import {
+  getSitemapChunkCount,
+  SITEMAP_REVALIDATE_SECONDS,
+} from '../../src/services/sitemapService';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const siteUrl = getSiteUrl();
@@ -15,7 +20,7 @@ export async function GET() {
   return new Response(body, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+      'Cache-Control': `public, s-maxage=${SITEMAP_REVALIDATE_SECONDS}, stale-while-revalidate=86400`,
     },
   });
 }

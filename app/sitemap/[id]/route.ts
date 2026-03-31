@@ -4,6 +4,7 @@ import {
   getSitemapEntries,
   getSitemapChunkCount,
   SITEMAP_CHUNK_SIZE,
+  SITEMAP_REVALIDATE_SECONDS,
 } from '../../../src/services/sitemapService';
 
 export async function GET(
@@ -43,7 +44,7 @@ export async function GET(
   return new Response(body, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
+      'Cache-Control': `public, s-maxage=${SITEMAP_REVALIDATE_SECONDS}, stale-while-revalidate=86400`,
     },
   });
 }

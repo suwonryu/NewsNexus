@@ -1,10 +1,18 @@
-import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { getArticlesByDate, getDailyBriefing } from './articleServerApi';
 
-export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 1000, 100, 5000);
-const SITEMAP_MAX_URLS = readIntEnv('SITEMAP_MAX_URLS', 10000, 200, 50000);
-const SITEMAP_MAX_DAYS = readIntEnv('SITEMAP_MAX_DAYS', 365, 31, 3650);
-const SITEMAP_MAX_PAGES_PER_DAY = readIntEnv('SITEMAP_MAX_PAGES_PER_DAY', 20, 1, 200);
+export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
+export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
+  'SITEMAP_REVALIDATE_SECONDS',
+  1800,
+  60,
+  86400,
+);
+const SITEMAP_MAX_URLS = readIntEnv('SITEMAP_MAX_URLS', 500, 50, 50000);
+const SITEMAP_ARTICLE_MAX_DAYS = readIntEnv('SITEMAP_ARTICLE_MAX_DAYS', 14, 1, 3650);
+const SITEMAP_BRIEFING_MAX_DAYS = readIntEnv('SITEMAP_BRIEFING_MAX_DAYS', 7, 0, 3650);
+const SITEMAP_MAX_PAGES_PER_DAY = readIntEnv('SITEMAP_MAX_PAGES_PER_DAY', 3, 1, 200);
+const SITEMAP_ARTICLE_PAGE_SIZE = readIntEnv('SITEMAP_ARTICLE_PAGE_SIZE', 50, 10, 200);
 
 export interface SitemapEntry {
   path: string;
@@ -13,7 +21,7 @@ export interface SitemapEntry {
   priority: string;
 }
 
-export const getSitemapEntries = cache(async (): Promise<SitemapEntry[]> => {
+const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   const entries: SitemapEntry[] = [
     {
       path: '/',
@@ -27,7 +35,7 @@ export const getSitemapEntries = cache(async (): Promise<SitemapEntry[]> => {
 
   for (
     let dayOffset = 0;
-    dayOffset < SITEMAP_MAX_DAYS && articleEntries.length < SITEMAP_MAX_URLS;
+    dayOffset < SITEMAP_ARTICLE_MAX_DAYS && articleEntries.length < SITEMAP_MAX_URLS;
     dayOffset += 1
   ) {
     const targetDate = getIsoDateWithOffset(dayOffset);
@@ -35,7 +43,7 @@ export const getSitemapEntries = cache(async (): Promise<SitemapEntry[]> => {
     let pageGuard = 0;
 
     do {
-      const page = await getArticlesByDate(targetDate, cursor, 50);
+      const page = await getArticlesByDate(targetDate, cursor, SITEMAP_ARTICLE_PAGE_SIZE);
 
       for (const item of page.items) {
         if (item.id === null || seen.has(item.id)) {
@@ -68,17 +76,29 @@ export const getSitemapEntries = cache(async (): Promise<SitemapEntry[]> => {
   entries.push(...(await getReadyBriefingSitemapEntries()));
 
   return entries;
+};
+
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries'], {
+  revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
-export const getSitemapChunkCount = cache(async () => {
+export async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  return getCachedSitemapEntries();
+}
+
+export async function getSitemapChunkCount(): Promise<number> {
   const entries = await getSitemapEntries();
   return Math.max(1, Math.ceil(entries.length / SITEMAP_CHUNK_SIZE));
-});
+}
 
-const getReadyBriefingSitemapEntries = cache(async (): Promise<SitemapEntry[]> => {
+async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
+  if (SITEMAP_BRIEFING_MAX_DAYS <= 0) {
+    return [];
+  }
+
   const entries: SitemapEntry[] = [];
 
-  for (let dayOffset = 1; dayOffset < SITEMAP_MAX_DAYS; dayOffset += 1) {
+  for (let dayOffset = 1; dayOffset <= SITEMAP_BRIEFING_MAX_DAYS; dayOffset += 1) {
     const targetDate = getIsoDateWithOffset(dayOffset);
     const briefing = await getDailyBriefing(targetDate);
 
@@ -95,7 +115,7 @@ const getReadyBriefingSitemapEntries = cache(async (): Promise<SitemapEntry[]> =
   }
 
   return entries;
-});
+}
 
 function readIntEnv(name: string, fallback: number, min: number, max: number): number {
   const raw = process.env[name];

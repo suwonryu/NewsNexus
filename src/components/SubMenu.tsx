@@ -92,7 +92,7 @@ function SubMenu({
   return (
     <aside
       ref={containerRef}
-      className={`overflow-y-auto rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
+      className={`min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
     >
       <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Stories</p>
       <h2 className="text-xl font-[650] mb-4 text-slate-900">기사 목록</h2>

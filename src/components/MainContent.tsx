@@ -98,7 +98,7 @@ function MainContent({
         return 'bg-slate-200 text-slate-600';
     }
   };
-  const containerClassName = `overflow-y-auto rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`;
+  const containerClassName = `min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`;
 
   if (!selectedDate) {
     return (
