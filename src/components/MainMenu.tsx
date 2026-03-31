@@ -7,6 +7,7 @@ interface MainMenuProps {
   onSelectDate: (date: string) => void;
   className?: string;
   showHeader?: boolean;
+  scrollMode?: 'responsive' | 'always';
 }
 
 function MainMenu({
@@ -15,6 +16,7 @@ function MainMenu({
   onSelectDate,
   className,
   showHeader = true,
+  scrollMode = 'responsive',
 }: MainMenuProps) {
   const [openYear, setOpenYear] = useState<number | null>(null);
   const [openMonthKey, setOpenMonthKey] = useState<string | null>(null);
@@ -41,9 +43,14 @@ function MainMenu({
     setOpenMonthKey(monthKey);
   }, [selectedDate]);
 
+  const scrollClassName =
+    scrollMode === 'always'
+      ? 'min-h-0 overflow-y-auto overscroll-contain'
+      : 'overflow-visible md:min-h-0 md:overflow-y-auto md:overscroll-contain';
+
   return (
     <aside
-      className={`min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
+      className={`${scrollClassName} rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
     >
       {showHeader && (
         <>

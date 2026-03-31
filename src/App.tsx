@@ -224,24 +224,6 @@ function App({
   );
 
   useEffect(() => {
-    const scrollLockClassName = 'mobile-app-shell-locked';
-    const syncMobileShellLock = () => {
-      const isMobile = window.matchMedia('(max-width: 767px)').matches;
-      document.documentElement.classList.toggle(scrollLockClassName, isMobile);
-      document.body.classList.toggle(scrollLockClassName, isMobile);
-    };
-
-    syncMobileShellLock();
-    window.addEventListener('resize', syncMobileShellLock);
-
-    return () => {
-      window.removeEventListener('resize', syncMobileShellLock);
-      document.documentElement.classList.remove(scrollLockClassName);
-      document.body.classList.remove(scrollLockClassName);
-    };
-  }, []);
-
-  useEffect(() => {
     const nextSelectedDate =
       initialSelectedDate ?? normalizeToIsoDate(initialArticleDetail?.publishedDate);
     if (nextSelectedDate) {
@@ -625,7 +607,7 @@ function App({
   }, [isDateSheetOpen]);
 
   return (
-    <div className="mobile-app-shell overflow-hidden md:min-h-screen md:overflow-visible md:p-6">
+    <div className="mobile-app-shell md:min-h-screen md:p-6">
       <div className="mobile-app-shell-body md:hidden flex min-h-0 flex-col gap-3">
         <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur">
           <p className="text-xs uppercase tracking-[0.14em] text-slate-500">오늘의 카카오뱅크</p>
@@ -654,16 +636,9 @@ function App({
           </div>
         </header>
 
-        <div className="relative min-h-0 flex-1 overflow-hidden overscroll-none">
-          <div
-            className={`absolute inset-0 transition-all duration-300 ease-out ${
-              mobileView === 'list'
-                ? 'translate-x-0 opacity-100 pointer-events-auto'
-                : '-translate-x-8 opacity-0 pointer-events-none'
-            }`}
-          >
+        {mobileView === 'list' ? (
+          <div className="transition-all duration-300 ease-out">
             <SubMenu
-              className="h-full overscroll-contain"
               selectedDate={selectedDate}
               items={articles}
               selectedArticleKey={selectedArticleKey}
@@ -673,33 +648,24 @@ function App({
               onLoadMore={handleLoadMore}
             />
           </div>
-
-          <div
-            className={`absolute inset-0 transition-all duration-300 ease-out ${
-              mobileView === 'detail'
-                ? 'translate-x-0 opacity-100 pointer-events-auto'
-                : 'translate-x-8 opacity-0 pointer-events-none'
-            }`}
-          >
-            <div className="flex h-full min-h-0 flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleShowArticleList}
-                className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
-              >
-                목록으로
-              </button>
-              <MainContent
-                className="min-h-0 flex-1"
-                selectedDate={selectedDate}
-                selectedArticleId={selectedArticleId}
-                pendingArticle={pendingArticle}
-                articleDetail={articleDetail}
-                isLoading={isDetailLoading}
-              />
-            </div>
+        ) : (
+          <div className="flex flex-col gap-2 transition-all duration-300 ease-out">
+            <button
+              type="button"
+              onClick={handleShowArticleList}
+              className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
+            >
+              목록으로
+            </button>
+            <MainContent
+              selectedDate={selectedDate}
+              selectedArticleId={selectedArticleId}
+              pendingArticle={pendingArticle}
+              articleDetail={articleDetail}
+              isLoading={isDetailLoading}
+            />
           </div>
-        </div>
+        )}
       </div>
 
       <div className="mb-3 hidden items-center justify-between md:flex">
@@ -762,7 +728,7 @@ function App({
           }`}
         />
         <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[78vh] rounded-t-3xl border-t border-white/60 bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-out ${
+          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-3xl border-t border-white/60 bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-out ${
             isDateSheetOpen ? 'translate-y-0' : 'translate-y-full'
           } mobile-bottom-sheet`}
         >
@@ -782,7 +748,8 @@ function App({
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
             showHeader={false}
-            className="h-[calc(78vh-96px)] overscroll-contain border-0 bg-transparent p-0 shadow-none"
+            scrollMode="always"
+            className="h-[calc(78dvh-96px)] border-0 bg-transparent p-0 shadow-none"
           />
         </div>
       </div>
