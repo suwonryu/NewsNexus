@@ -93,45 +93,45 @@ function MainMenu({
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <ul className="pl-3 space-y-2">
-                      {yearGroup.months.map((monthGroup) => (
-                        <li key={`${yearGroup.year}-${monthGroup.month}`}>
-                          {(() => {
-                            const monthKey = `${yearGroup.year}-${monthGroup.month}`;
-                            const isMonthOpen = openMonthKey === monthKey;
+                    {isOpen ? (
+                      <ul className="pl-3 space-y-2">
+                        {yearGroup.months.map((monthGroup) => {
+                          const monthKey = `${yearGroup.year}-${monthGroup.month}`;
+                          const isMonthOpen = openMonthKey === monthKey;
 
-                            return (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleMonth(monthKey)}
-                                  aria-expanded={isMonthOpen}
-                                  className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
-                                >
-                                  <span>{monthGroup.month}월</span>
-                                  <svg
-                                    viewBox="0 0 20 20"
-                                    fill="none"
-                                    aria-hidden="true"
-                                    className={`h-3.5 w-3.5 transition-transform duration-300 ${
-                                      isMonthOpen ? 'rotate-180' : ''
-                                    }`}
-                                  >
-                                    <path
-                                      d="M5 7.5L10 12.5L15 7.5"
-                                      stroke="currentColor"
-                                      strokeWidth="1.7"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                </button>
-                                <div
-                                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                                    isMonthOpen ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'
+                          return (
+                            <li key={monthKey}>
+                              <button
+                                type="button"
+                                onClick={() => toggleMonth(monthKey)}
+                                aria-expanded={isMonthOpen}
+                                className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
+                              >
+                                <span>{monthGroup.month}월</span>
+                                <svg
+                                  viewBox="0 0 20 20"
+                                  fill="none"
+                                  aria-hidden="true"
+                                  className={`h-3.5 w-3.5 transition-transform duration-300 ${
+                                    isMonthOpen ? 'rotate-180' : ''
                                   }`}
                                 >
-                                  <div className="overflow-hidden">
+                                  <path
+                                    d="M5 7.5L10 12.5L15 7.5"
+                                    stroke="currentColor"
+                                    strokeWidth="1.7"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
+                              <div
+                                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                                  isMonthOpen ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'
+                                }`}
+                              >
+                                <div className="overflow-hidden">
+                                  {isMonthOpen ? (
                                     <ul className="pl-3 space-y-1">
                                       {monthGroup.days.map((day) => (
                                         <li key={day}>
@@ -149,14 +149,14 @@ function MainMenu({
                                         </li>
                                       ))}
                                     </ul>
-                                  </div>
+                                  ) : null}
                                 </div>
-                              </>
-                            );
-                          })()}
-                        </li>
-                      ))}
-                    </ul>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
                   </div>
                 </div>
               </li>

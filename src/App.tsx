@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
+import { SITE_NAME } from './lib/siteMetadata';
 import {
   fetchArticleDetail,
   fetchArticlesByDate,
@@ -185,6 +186,7 @@ interface AppProps {
   initialArticleId?: number | null;
   initialArticleDetail?: ArticleDetail | null;
   initialSelectedDate?: string | null;
+  initialDateTree?: DateTreeYear[];
   initialArticles?: ArticleListItem[];
   initialNextCursor?: string | null;
   initialHasMore?: boolean;
@@ -194,12 +196,13 @@ function App({
   initialArticleId = null,
   initialArticleDetail = null,
   initialSelectedDate = null,
+  initialDateTree = [],
   initialArticles = [],
   initialNextCursor = null,
   initialHasMore = false,
 }: AppProps) {
   const consumedServerInitialListRef = useRef(false);
-  const [dateTree, setDateTree] = useState<DateTreeYear[]>([]);
+  const [dateTree, setDateTree] = useState<DateTreeYear[]>(initialDateTree);
   const [selectedDate, setSelectedDate] = useState<string | null>(
     () =>
       initialSelectedDate ??
@@ -245,7 +248,19 @@ function App({
   }, [initialArticleId, initialArticleDetail, initialSelectedDate]);
 
   useEffect(() => {
+    if (initialDateTree.length > 0) {
+      setDateTree(initialDateTree);
+    }
+  }, [initialDateTree]);
+
+  useEffect(() => {
     let disposed = false;
+
+    if (initialDateTree.length > 0) {
+      return () => {
+        disposed = true;
+      };
+    }
 
     const loadDateTree = async () => {
       try {
@@ -264,7 +279,7 @@ function App({
     return () => {
       disposed = true;
     };
-  }, []);
+  }, [initialDateTree]);
 
   useEffect(() => {
     let disposed = false;
@@ -610,7 +625,7 @@ function App({
     <div className="mobile-app-shell md:min-h-screen md:p-6">
       <div className="mobile-app-shell-body md:hidden flex min-h-0 flex-col gap-3">
         <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">오늘의 카카오뱅크</p>
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{SITE_NAME}</p>
           <div className="mt-2 flex items-center justify-between gap-3">
             <h1 className="text-lg font-[650] text-slate-900">
               {mobileView === 'list' ? '기사 목록' : '기사 보기'}
@@ -670,10 +685,9 @@ function App({
 
       <div className="mb-3 hidden items-center justify-between md:flex">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Overview</p>
-          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950">
-            기사 탐색
-          </h1>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">카카오뱅크 뉴스 요약</p>
+          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950">{SITE_NAME}</h1>
+          <p className="mt-1 text-sm text-slate-600">기사 탐색</p>
         </div>
         {selectedDate && (
           <a

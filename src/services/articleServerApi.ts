@@ -1,10 +1,11 @@
 import type { ArticleDetail, ArticleListResponse, IsoDate } from '../types/article';
-import { getMockArticleDetail, getMockArticlesByDate } from './mockArticleData';
+import { getMockArticleDetail, getMockArticlesByDate, getMockDateTree } from './mockArticleData';
 import type {
   DailyBriefingKeywordDetail,
   DailyBriefingResponse,
 } from './dailyBriefing';
 import { buildFallbackDailyBriefingResponse } from './dailyBriefing';
+import type { DateTreeResponse } from '../types/article';
 
 const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
 const KABANG_ARTICLE_API_BASE = `${KABANG_API_ROOT}/new`;
@@ -108,6 +109,10 @@ export async function getDailyBriefing(date: IsoDate): Promise<DailyBriefingResp
     const fallbackArticles = getMockArticlesByDate(date, null, 100).items;
     return buildFallbackDailyBriefingResponse(date, fallbackArticles);
   }
+}
+
+export async function getDateTree(): Promise<DateTreeResponse> {
+  return getMockDateTree();
 }
 
 export async function getRecentArticleIds(limit = 200): Promise<number[]> {

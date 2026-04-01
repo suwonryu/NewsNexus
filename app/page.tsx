@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import App from '../src/App';
-import { getArticlesByDate } from '../src/services/articleServerApi';
+import { SITE_DESCRIPTION, SITE_NAME } from '../src/lib/siteMetadata';
+import { getSiteUrl } from '../src/lib/siteUrl';
+import { getArticlesByDate, getDateTree } from '../src/services/articleServerApi';
 
 export const metadata: Metadata = {
   alternates: {
@@ -18,14 +20,33 @@ function getTodayIsoDate(): string {
 
 export default async function Page() {
   const selectedDate = getTodayIsoDate();
-  const response = await getArticlesByDate(selectedDate, null);
+  const [response, dateTree] = await Promise.all([
+    getArticlesByDate(selectedDate, null),
+    getDateTree(),
+  ]);
+  const siteUrl = getSiteUrl();
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    inLanguage: 'ko-KR',
+    url: `${siteUrl}/`,
+  };
 
   return (
-    <App
-      initialSelectedDate={selectedDate}
-      initialArticles={response.items}
-      initialNextCursor={response.nextCursor}
-      initialHasMore={response.hasNext}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <App
+        initialSelectedDate={selectedDate}
+        initialDateTree={dateTree.years}
+        initialArticles={response.items}
+        initialNextCursor={response.nextCursor}
+        initialHasMore={response.hasNext}
+      />
+    </>
   );
 }

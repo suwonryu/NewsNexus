@@ -8,7 +8,11 @@ import {
 } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
-import { getArticleDetail, getArticlesByDate } from '../../../src/services/articleServerApi';
+import {
+  getArticleDetail,
+  getArticlesByDate,
+  getDateTree,
+} from '../../../src/services/articleServerApi';
 
 const ARTICLE_LIST_PAGE_SIZE = 20;
 
@@ -102,7 +106,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   const selectedDate = getArticleIsoDate(article, getTodayIsoDate());
-  const response = await getArticlesForInitialRender(selectedDate, article);
+  const [response, dateTree] = await Promise.all([
+    getArticlesForInitialRender(selectedDate, article),
+    getDateTree(),
+  ]);
   const initialArticles = ensureArticleInList(
     response.items,
     createListItemFromDetail(article, selectedDate),
@@ -145,6 +152,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         initialArticleId={parsedId}
         initialArticleDetail={article}
         initialSelectedDate={selectedDate}
+        initialDateTree={dateTree.years}
         initialArticles={initialArticles}
         initialNextCursor={response.nextCursor}
         initialHasMore={response.hasMore}

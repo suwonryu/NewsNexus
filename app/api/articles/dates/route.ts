@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getMockDateTree } from '../../../../src/services/mockArticleData';
+import { getDateTree } from '../../../../src/services/articleServerApi';
 
 export async function GET() {
-  return NextResponse.json(getMockDateTree());
+  return NextResponse.json(await getDateTree());
 }

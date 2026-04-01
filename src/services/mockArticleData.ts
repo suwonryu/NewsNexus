@@ -10,6 +10,7 @@ const SOURCE_NAME = '오늘의 카카오뱅크';
 const SOURCE_URL = 'https://example.com/mock-article';
 const START_DATE = '2024-07-14';
 const MOCK_ID_BASE = 1738886400000000;
+let cachedDateTree: { dayKey: string; response: DateTreeResponse } | null = null;
 
 const MOCK_ARTICLES_BY_DATE: Record<IsoDate, ArticleDetail[]> = {
   '2026-02-07': Array.from({ length: 26 }, (_, idx) => {
@@ -59,6 +60,11 @@ const MOCK_ARTICLES_BY_DATE: Record<IsoDate, ArticleDetail[]> = {
 };
 
 export function getMockDateTree(): DateTreeResponse {
+  const dayKey = formatIsoLocalDate(new Date());
+  if (cachedDateTree?.dayKey === dayKey) {
+    return cachedDateTree.response;
+  }
+
   const yearsMap = new Map<number, Map<number, IsoDate[]>>();
   const start = new Date(`${START_DATE}T00:00:00`);
   const today = new Date();
@@ -94,7 +100,13 @@ export function getMockDateTree(): DateTreeResponse {
         })),
     }));
 
-  return { years };
+  const response = { years };
+  cachedDateTree = {
+    dayKey,
+    response,
+  };
+
+  return response;
 }
 
 function formatIsoLocalDate(date: Date): IsoDate {
