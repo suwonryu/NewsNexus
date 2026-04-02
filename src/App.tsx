@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import posthog from 'posthog-js';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
@@ -632,13 +633,13 @@ function App({
             </h1>
             <div className="flex items-center gap-2">
               {selectedDate && (
-                <a
+                <Link
                   href={getBriefingHref(selectedDate)}
                   onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
                   className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100"
                 >
                   {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
-                </a>
+                </Link>
               )}
               <button
                 type="button"
@@ -690,7 +691,7 @@ function App({
           <p className="mt-1 text-sm text-slate-600">기사 탐색</p>
         </div>
         {selectedDate && (
-          <a
+          <Link
             href={getBriefingHref(selectedDate)}
             onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
             className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] hover:border-cyan-400 hover:bg-cyan-100"
@@ -698,7 +699,7 @@ function App({
             {isCurrentIsoDate(selectedDate)
               ? `${selectedDate} 브리핑 준비 중`
               : `${selectedDate} 브리핑 보기`}
-          </a>
+          </Link>
         )}
       </div>
 
