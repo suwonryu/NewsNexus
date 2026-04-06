@@ -2,6 +2,9 @@
   "name": "newsnexus2-next",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=24.14.1 <25"
+  },
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\"",
     "dev": "next dev",
@@ -11,7 +14,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "^15.1.6",
+    "next": "^15.5.14",
     "posthog-js": "^1.364.1",
     "posthog-node": "^5.28.8",
     "react": "^18.2.0",
@@ -24,7 +27,7 @@
     "@types/react-dom": "^18.2.22",
     "autoprefixer": "^10.4.24",
     "eslint": "^8.57.0",
-    "eslint-config-next": "^15.1.6",
+    "eslint-config-next": "^15.5.14",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.2.2"
