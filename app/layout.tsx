@@ -1,6 +1,7 @@
 import localFont from 'next/font/local';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { ThemeProvider } from '../src/components/ThemeProvider';
 import {
   DEFAULT_OG_IMAGE,
   DEFAULT_OG_IMAGE_PATH,
@@ -49,14 +50,35 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+const themeInitializerScript = `
+(() => {
+  const storageKey = 'newsnexus-theme-preference';
+  const root = document.documentElement;
+  const isValidPreference = (value) => value === 'system' || value === 'light' || value === 'dark';
+  const preference = isValidPreference(localStorage.getItem(storageKey))
+    ? localStorage.getItem(storageKey)
+    : 'system';
+  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const resolvedTheme = preference === 'system' ? systemTheme : preference;
+
+  root.dataset.themePreference = preference;
+  root.dataset.theme = resolvedTheme;
+  root.classList.toggle('dark', resolvedTheme === 'dark');
+  root.style.colorScheme = resolvedTheme;
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body className={pretendard.variable}>{children}</body>
+    <html lang="ko" suppressHydrationWarning>
+      <body className={`${pretendard.variable} transition-colors duration-300`}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitializerScript }} />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

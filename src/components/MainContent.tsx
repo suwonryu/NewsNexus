@@ -89,21 +89,21 @@ function MainContent({
   const getSentimentBadgeClassName = (sentiment: string | null) => {
     switch (normalizeSentiment(sentiment)) {
       case 'NEGATIVE':
-        return 'bg-rose-100 text-rose-700';
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-200';
       case 'POSITIVE':
-        return 'bg-emerald-100 text-emerald-700';
+        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200';
       case 'NEUTRAL':
-        return 'bg-slate-100 text-slate-700';
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-700/60 dark:text-slate-200';
       default:
-        return 'bg-slate-200 text-slate-600';
+        return 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
     }
   };
-  const containerClassName = `overflow-visible rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
+  const containerClassName = `overflow-visible rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_18px_44px_rgba(2,6,23,0.4)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
 
   if (!selectedDate) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600">날짜를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">날짜를 선택하세요</p>
       </main>
     );
   }
@@ -111,14 +111,14 @@ function MainContent({
   if (pendingArticle) {
     return (
       <main className={containerClassName}>
-        <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500">Article Detail</p>
-        <h1 className="mb-2 text-3xl font-[650] text-slate-900">{pendingArticle.title}</h1>
-        <p className="mb-4 text-sm text-slate-600">기사 내용을 불러오는 중...</p>
+        <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Article Detail</p>
+        <h1 className="mb-2 text-3xl font-[650] text-slate-900 dark:text-slate-50">{pendingArticle.title}</h1>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">기사 내용을 불러오는 중...</p>
         <div className="mt-4 space-y-2 animate-pulse">
-          <div className="h-4 w-full rounded bg-slate-200" />
-          <div className="h-4 w-[92%] rounded bg-slate-200" />
-          <div className="h-4 w-[88%] rounded bg-slate-200" />
-          <div className="h-4 w-[74%] rounded bg-slate-200" />
+          <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-[92%] rounded bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-[88%] rounded bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-[74%] rounded bg-slate-200 dark:bg-slate-800" />
         </div>
       </main>
     );
@@ -127,7 +127,7 @@ function MainContent({
   if (selectedArticleId === null) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600">기사를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">기사를 선택하세요</p>
       </main>
     );
   }
@@ -135,7 +135,7 @@ function MainContent({
   if (isLoading && !articleDetail) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600">불러오는 중...</p>
+        <p className="text-slate-600 dark:text-slate-300">불러오는 중...</p>
       </main>
     );
   }
@@ -143,22 +143,22 @@ function MainContent({
   if (!articleDetail) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600">기사를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">기사를 선택하세요</p>
       </main>
     );
   }
 
   return (
     <main className={containerClassName}>
-      <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500">Article Detail</p>
-      <h1 className="mb-2 text-3xl font-[650] text-slate-900">{articleDetail.title}</h1>
-      <p className="mb-2 text-sm text-slate-600">뉴스 ID: {articleDetail.id}</p>
+      <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Article Detail</p>
+      <h1 className="mb-2 text-3xl font-[650] text-slate-900 dark:text-slate-50">{articleDetail.title}</h1>
+      <p className="mb-2 text-sm text-slate-600 dark:text-slate-300">뉴스 ID: {articleDetail.id}</p>
       <span
         className={`inline-flex rounded-full px-3 py-1 text-xs font-medium md:font-semibold ${getSentimentBadgeClassName(articleDetail.sentiment)}`}
       >
         AI평가: {formatSentiment(articleDetail.sentiment)}
       </span>
-      <article className="prose prose-slate mt-6 max-w-none font-[420] leading-7 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-3 [&_li]:my-1">
+      <article className="prose prose-slate mt-6 max-w-none font-[420] leading-7 dark:prose-invert [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:my-1">
         <ReactMarkdown>{getSummaryText(articleDetail.summary)}</ReactMarkdown>
       </article>
       <a
@@ -166,7 +166,7 @@ function MainContent({
         target="_blank"
         rel="noreferrer"
         onClick={() => posthog.capture('article_original_link_clicked', { article_id: articleDetail.id, title: articleDetail.title })}
-        className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-medium md:font-semibold text-white transition hover:bg-cyan-700 hover:border-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:border-cyan-700 hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 md:font-semibold"
       >
         원문 보기
       </a>

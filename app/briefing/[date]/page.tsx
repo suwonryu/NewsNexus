@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
+import { ThemeToggle } from '../../../src/components/ThemeToggle';
 import {
   DEFAULT_OG_IMAGE,
   DEFAULT_OG_IMAGE_PATH,
@@ -116,38 +118,39 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
       <div className="mx-auto max-w-[1320px]">
-        <header className="mb-4 flex flex-col gap-3 rounded-[28px] border border-white/70 bg-white/82 px-5 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Briefing Page</p>
-            <h1 className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950">
-              {formatKoreanDate(date)} 데일리 브리핑
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-white"
-            >
-              기사 탐색으로
-            </Link>
-            <span className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800">
-              {date}
-            </span>
-          </div>
-        </header>
+        <BriefingHeader
+          desktopEyebrow="Daily Briefing"
+          mobileEyebrow="오늘의 카카오뱅크"
+          desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
+          mobileTitle="데일리 브리핑"
+          actionCount={2}
+          actions={
+            <>
+              <Link
+                href="/"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+              >
+                기사 탐색으로
+              </Link>
+              <span className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200">
+                {date}
+              </span>
+            </>
+          }
+        />
 
         <DailyBriefingCard briefing={briefing} />
 
         <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
+          <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Featured</p>
-                <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Featured</p>
+                <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
                   대표 기사
                 </h2>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 상위 {briefing.featuredArticles.length}건
               </span>
             </div>
@@ -164,46 +167,46 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           </section>
 
           <div className="grid gap-4">
-            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Signals</p>
-              <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950">
+            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Signals</p>
+              <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
                 주목 포인트
               </h2>
               <div className="mt-4 space-y-3">
                 {getSignalItems(briefing).map((signal, index) => (
                   <div
                     key={signal.keyword}
-                    className="rounded-3xl border border-cyan-100 bg-cyan-50/70 px-4 py-4"
+                    className="rounded-3xl border border-cyan-100 bg-cyan-50/70 px-4 py-4 dark:border-cyan-500/20 dark:bg-cyan-500/10"
                   >
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-700">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300">
                       Point {index + 1}
                     </p>
-                    <p className="mt-2 text-base font-[650] text-slate-900">#{signal.keyword}</p>
+                    <p className="mt-2 text-base font-[650] text-slate-900 dark:text-slate-50">#{signal.keyword}</p>
                     {signal.description && (
-                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-600">
+                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-600 dark:text-slate-300">
                         {signal.description}
                       </p>
                     )}
                   </div>
                 ))}
                 {getSignalItems(briefing).length === 0 && (
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-300">
                     아직 추출된 핵심 키워드가 없습니다.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Sources</p>
-              <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950">
+            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Sources</p>
+              <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
                 출처
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 {briefing.sourceNames.map((sourceName) => (
                   <span
                     key={sourceName}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-200"
                   >
                     {sourceName}
                   </span>
@@ -249,42 +252,47 @@ function buildTwitterMetadata(
   };
 }
 
-function PreparingBriefingState({ date }: { date: string }) {
+function PreparingBriefingState({
+  date,
+}: {
+  date: string;
+}) {
   const previousDate = getPreviousIsoDateFrom(date);
 
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
       <div className="mx-auto max-w-[1120px]">
-        <header className="mb-4 flex flex-col gap-3 rounded-[28px] border border-white/70 bg-white/82 px-5 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Briefing Page</p>
-            <h1 className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950">
-              {formatKoreanDate(date)} 데일리 브리핑
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-white"
-            >
-              기사 탐색으로
-            </Link>
-            <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
-              집계 중
-            </span>
-          </div>
-        </header>
+        <BriefingHeader
+          desktopEyebrow="Daily Briefing"
+          mobileEyebrow="오늘의 카카오뱅크"
+          desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
+          mobileTitle="브리핑 준비 중"
+          actionCount={2}
+          actions={
+            <>
+              <Link
+                href="/"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+              >
+                기사 탐색으로
+              </Link>
+              <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                집계 중
+              </span>
+            </>
+          }
+        />
 
-        <section className="relative overflow-hidden rounded-[36px] border border-white/75 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(135deg,rgba(255,251,235,0.97),rgba(248,250,252,0.97))] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.28),transparent)] opacity-60" />
+        <section className="relative overflow-hidden rounded-[36px] border border-white/75 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(135deg,rgba(255,251,235,0.97),rgba(248,250,252,0.97))] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-slate-700/60 dark:bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.97),rgba(41,37,36,0.94))] dark:shadow-[0_28px_64px_rgba(2,6,23,0.48)] lg:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.28),transparent)] opacity-60 dark:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.06),transparent)] dark:opacity-70" />
           <div className="relative">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-amber-700/90">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-amber-700/90 dark:text-amber-200/90">
               Preparing Briefing
             </p>
-            <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 lg:text-5xl">
+            <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
               오늘 브리핑은 아직 준비 중입니다
             </h2>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700">
+            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-200">
               오늘 브리핑은 현재 기사 수집과 분석이 진행 중이어서 아직 제공되지 않습니다.
               브리핑은 하루 단위 집계가 마무리된 뒤 순차적으로 공개됩니다.
             </p>
@@ -310,13 +318,13 @@ function PreparingBriefingState({ date }: { date: string }) {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href={`/briefing/${previousDate}`}
-                className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100"
+                className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
               >
                 {previousDate} 브리핑 보기
               </Link>
               <Link
                 href="/"
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600"
               >
                 기사 탐색으로 돌아가기
               </Link>
@@ -328,31 +336,36 @@ function PreparingBriefingState({ date }: { date: string }) {
   );
 }
 
-function NotFoundBriefingState({ date }: { date: string }) {
+function NotFoundBriefingState({
+  date,
+}: {
+  date: string;
+}) {
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
       <div className="mx-auto max-w-[1120px]">
-        <header className="mb-4 flex flex-col gap-3 rounded-[28px] border border-white/70 bg-white/82 px-5 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Briefing Page</p>
-            <h1 className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950">
-              {formatKoreanDate(date)} 데일리 브리핑
-            </h1>
-          </div>
-          <Link
-            href="/"
-            className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-white"
-          >
-            기사 탐색으로
-          </Link>
-        </header>
+        <BriefingHeader
+          desktopEyebrow="Daily Briefing"
+          mobileEyebrow="오늘의 카카오뱅크"
+          desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
+          mobileTitle="브리핑 없음"
+          actionCount={1}
+          actions={
+            <Link
+              href="/"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+            >
+              기사 탐색으로
+            </Link>
+          }
+        />
 
-        <section className="rounded-[36px] border border-white/75 bg-white/82 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:p-8">
-          <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">No Briefing</p>
-          <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 lg:text-5xl">
+        <section className="rounded-[36px] border border-white/75 bg-white/82 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-slate-700/60 dark:bg-slate-950/72 dark:shadow-[0_28px_64px_rgba(2,6,23,0.48)] lg:p-8">
+          <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">No Briefing</p>
+          <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
             이 날짜의 브리핑 데이터가 없습니다
           </h2>
-          <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700">
+          <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-300">
             미래 날짜이거나, 해당 날짜에는 브리핑을 만들 수 있는 기사 데이터가 아직 없습니다.
             기사 탐색 화면으로 돌아가 다른 날짜를 살펴보는 편이 좋습니다.
           </p>
@@ -360,7 +373,7 @@ function NotFoundBriefingState({ date }: { date: string }) {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100"
+              className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
             >
               기사 탐색으로 이동
             </Link>
@@ -382,11 +395,62 @@ function StatusCard({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/80 bg-white/76 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    <div className="rounded-3xl border border-white/80 bg-white/76 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:border-slate-700/55 dark:bg-slate-950/40 dark:shadow-[0_14px_30px_rgba(2,6,23,0.32)]">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950 dark:text-slate-50">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
     </div>
+  );
+}
+
+function BriefingHeader({
+  desktopEyebrow,
+  mobileEyebrow,
+  desktopTitle,
+  mobileTitle,
+  actions,
+  actionCount,
+}: {
+  desktopEyebrow: string;
+  mobileEyebrow: string;
+  desktopTitle: string;
+  mobileTitle: string;
+  actions: ReactNode;
+  actionCount: number;
+}) {
+  return (
+    <header className="mb-4 rounded-2xl border border-white/70 bg-white/82 px-5 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_20px_48px_rgba(2,6,23,0.42)] md:rounded-[28px]">
+      <div className="md:flex md:items-center md:justify-between md:gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs tracking-[0.14em] text-slate-500 dark:text-slate-400 md:uppercase md:tracking-[0.18em]">
+              <span className="md:hidden">{mobileEyebrow}</span>
+              <span className="hidden md:inline">{desktopEyebrow}</span>
+            </p>
+            <h1 className="mt-2 text-lg font-[650] tracking-[-0.03em] text-slate-950 dark:text-slate-50 md:text-2xl md:font-[760] md:tracking-[-0.04em]">
+              <span className="md:hidden">{mobileTitle}</span>
+              <span className="hidden md:inline">{desktopTitle}</span>
+            </h1>
+          </div>
+          <div className="md:hidden">
+            <ThemeToggle compact />
+          </div>
+        </div>
+
+        <div className="mt-3 hidden flex-wrap items-center gap-2 md:mt-0 md:flex md:justify-end">
+          <ThemeToggle compact />
+          {actions}
+        </div>
+      </div>
+
+      <div
+        className={`mt-3 flex flex-wrap items-center gap-2 md:hidden ${
+          actionCount > 1 ? 'justify-between' : 'justify-start'
+        }`}
+      >
+        {actions}
+      </div>
+    </header>
   );
 }
 

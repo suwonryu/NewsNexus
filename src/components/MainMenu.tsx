@@ -50,12 +50,12 @@ function MainMenu({
 
   return (
     <aside
-      className={`${scrollClassName} rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur ${className ?? ''}`}
+      className={`${scrollClassName} rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_18px_44px_rgba(2,6,23,0.4)] ${className ?? ''}`}
     >
       {showHeader && (
         <>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Timeline</p>
-          <h2 className="text-xl font-[650] mb-4 text-slate-900">날짜</h2>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2 dark:text-slate-400">Timeline</p>
+          <h2 className="text-xl font-[650] mb-4 text-slate-900 dark:text-slate-50">날짜</h2>
         </>
       )}
       <nav aria-label="기사 날짜">
@@ -69,7 +69,7 @@ function MainMenu({
                   type="button"
                   onClick={() => toggleYear(yearGroup.year)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-left font-[650] text-slate-800 transition hover:border-cyan-300 hover:text-cyan-700"
+                  className="flex w-full items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-left font-[650] text-slate-800 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
                 >
                   <span>{yearGroup.year}년</span>
                   <svg
@@ -105,7 +105,7 @@ function MainMenu({
                                 type="button"
                                 onClick={() => toggleMonth(monthKey)}
                                 aria-expanded={isMonthOpen}
-                                className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
                               >
                                 <span>{monthGroup.month}월</span>
                                 <svg
@@ -140,8 +140,8 @@ function MainMenu({
                                             onClick={() => onSelectDate(day)}
                                             className={`w-full rounded-md px-2 py-1 text-left text-sm transition ${
                                               selectedDate === day
-                                                ? 'font-[650] text-cyan-700 bg-cyan-50'
-                                                : 'text-slate-700 hover:bg-slate-100 hover:text-cyan-700'
+                                                ? 'bg-cyan-50 font-[650] text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-200'
+                                                : 'text-slate-700 hover:bg-slate-100 hover:text-cyan-700 dark:text-slate-300 dark:hover:bg-slate-800/80 dark:hover:text-cyan-200'
                                             }`}
                                           >
                                             {day}

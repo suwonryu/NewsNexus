@@ -92,16 +92,16 @@ function SubMenu({
   return (
     <aside
       ref={containerRef}
-      className={`overflow-visible rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`}
+      className={`overflow-visible rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_18px_44px_rgba(2,6,23,0.4)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`}
     >
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2">Stories</p>
-      <h2 className="text-xl font-[650] mb-4 text-slate-900">기사 목록</h2>
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-500 mb-2 dark:text-slate-400">Stories</p>
+      <h2 className="text-xl font-[650] mb-4 text-slate-900 dark:text-slate-50">기사 목록</h2>
 
-      {!selectedDate && <p className="text-sm text-slate-600">날짜를 선택하세요</p>}
+      {!selectedDate && <p className="text-sm text-slate-600 dark:text-slate-300">날짜를 선택하세요</p>}
 
       {selectedDate && (
         <>
-          <p className="mb-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          <p className="mb-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
             {selectedDate}
           </p>
           <ul className="space-y-2">
@@ -131,12 +131,12 @@ function SubMenu({
                       }}
                       className={`block w-full rounded-xl border p-3 text-left transition ${
                         selectedArticleKey === `${article.id}:${article.link}`
-                          ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)]'
-                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                          ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)] dark:border-cyan-400 dark:bg-cyan-500/12 dark:shadow-[0_10px_26px_rgba(8,145,178,0.18)]'
+                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40 dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/10'
                       }`}
                     >
-                      <div className="text-sm font-[650] text-slate-900">{article.title}</div>
-                      <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                      <div className="text-sm font-[650] text-slate-900 dark:text-slate-50">{article.title}</div>
+                      <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{article.sourceName}</div>
                     </a>
                   ) : (
                     <button
@@ -149,14 +149,14 @@ function SubMenu({
                       disabled={!canOpenNullIdArticle}
                       className={`w-full rounded-xl border p-3 text-left transition ${
                         !canOpenNullIdArticle
-                          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40'
+                          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-500'
+                          : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40 dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/10'
                       }`}
                     >
-                      <div className="text-sm font-[650] text-slate-900">{article.title}</div>
-                      <div className="mt-1 text-xs text-slate-600">{article.sourceName}</div>
+                      <div className="text-sm font-[650] text-slate-900 dark:text-slate-50">{article.title}</div>
+                      <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{article.sourceName}</div>
                       {!canOpenNullIdArticle && (
-                        <div className="mt-1 text-xs text-slate-500">상세 조회 불가</div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-500">상세 조회 불가</div>
                       )}
                     </button>
                   )}
@@ -165,9 +165,9 @@ function SubMenu({
             })}
           </ul>
 
-          {isLoading && <p className="mt-3 text-xs text-slate-500">불러오는 중...</p>}
+          {isLoading && <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">불러오는 중...</p>}
           {selectedDate && !isLoading && items.length === 0 && (
-            <p className="text-sm text-slate-600">기사가 없습니다</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">기사가 없습니다</p>
           )}
 
           <div ref={sentinelRef} className="h-3" />

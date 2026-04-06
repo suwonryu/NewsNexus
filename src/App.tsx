@@ -6,6 +6,7 @@ import posthog from 'posthog-js';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
+import { ThemeToggle } from './components/ThemeToggle';
 import { SITE_NAME } from './lib/siteMetadata';
 import {
   fetchArticleDetail,
@@ -625,30 +626,38 @@ function App({
   return (
     <div className="mobile-app-shell md:min-h-screen md:p-6">
       <div className="mobile-app-shell-body md:hidden flex min-h-0 flex-col gap-3">
-        <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{SITE_NAME}</p>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <h1 className="text-lg font-[650] text-slate-900">
-              {mobileView === 'list' ? '기사 목록' : '기사 보기'}
-            </h1>
-            <div className="flex items-center gap-2">
-              {selectedDate && (
-                <Link
-                  href={getBriefingHref(selectedDate)}
-                  onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
-                  className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100"
-                >
-                  {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={() => { posthog.capture('mobile_date_sheet_opened'); setIsDateSheetOpen(true); }}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
-              >
-                {selectedDate ?? '날짜 선택'}
-              </button>
+        <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_12px_32px_rgba(2,6,23,0.45)]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                {SITE_NAME}
+              </p>
+              <h1 className="mt-2 text-lg font-[650] text-slate-900 dark:text-slate-50">
+                {mobileView === 'list' ? '기사 목록' : '기사 보기'}
+              </h1>
             </div>
+            <ThemeToggle compact />
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            {selectedDate && (
+              <Link
+                href={getBriefingHref(selectedDate)}
+                onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
+                className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+              >
+                {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                posthog.capture('mobile_date_sheet_opened');
+                setIsDateSheetOpen(true);
+              }}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
+            >
+              {selectedDate ?? '날짜 선택'}
+            </button>
           </div>
         </header>
 
@@ -669,7 +678,7 @@ function App({
             <button
               type="button"
               onClick={handleShowArticleList}
-              className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
+              className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-950/75 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
             >
               목록으로
             </button>
@@ -686,21 +695,28 @@ function App({
 
       <div className="mb-3 hidden items-center justify-between md:flex">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">카카오뱅크 뉴스 요약</p>
-          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950">{SITE_NAME}</h1>
-          <p className="mt-1 text-sm text-slate-600">기사 탐색</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+            카카오뱅크 뉴스 요약
+          </p>
+          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950 dark:text-slate-50">
+            {SITE_NAME}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">기사 탐색</p>
         </div>
-        {selectedDate && (
-          <Link
-            href={getBriefingHref(selectedDate)}
-            onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
-            className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] hover:border-cyan-400 hover:bg-cyan-100"
-          >
-            {isCurrentIsoDate(selectedDate)
-              ? `${selectedDate} 브리핑 준비 중`
-              : `${selectedDate} 브리핑 보기`}
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {selectedDate && (
+            <Link
+              href={getBriefingHref(selectedDate)}
+              onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
+              className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:shadow-[0_10px_28px_rgba(8,145,178,0.2)] dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+            >
+              {isCurrentIsoDate(selectedDate)
+                ? `${selectedDate} 브리핑 준비 중`
+                : `${selectedDate} 브리핑 보기`}
+            </Link>
+          )}
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="hidden md:grid h-[calc(100vh-7rem)] grid-cols-[260px_360px_1fr] gap-3">
@@ -738,22 +754,22 @@ function App({
           onClick={() => setIsDateSheetOpen(false)}
           className={`absolute inset-0 backdrop-blur-[1px] transition-opacity duration-300 ${
             isDateSheetOpen
-              ? 'bg-slate-900/40 opacity-100 pointer-events-auto'
+              ? 'bg-slate-900/40 opacity-100 pointer-events-auto dark:bg-slate-950/65'
               : 'bg-slate-900/0 opacity-0 pointer-events-none'
           }`}
         />
         <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-3xl border-t border-white/60 bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-out ${
+          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-3xl border-t border-white/60 bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950 dark:shadow-[0_-20px_48px_rgba(2,6,23,0.55)] ${
             isDateSheetOpen ? 'translate-y-0' : 'translate-y-full'
           } mobile-bottom-sheet`}
         >
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300" />
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-[650] text-slate-900">날짜 선택</h2>
+            <h2 className="text-base font-[650] text-slate-900 dark:text-slate-50">날짜 선택</h2>
             <button
               type="button"
               onClick={() => setIsDateSheetOpen(false)}
-              className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600"
+              className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
             >
               닫기
             </button>

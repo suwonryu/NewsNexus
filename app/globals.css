@@ -7,10 +7,23 @@
   --bg-2: #eef2ff;
   --ink-1: #0f172a;
   --ink-2: #475569;
+  --surface-1: rgba(255, 255, 255, 0.82);
+  --surface-2: rgba(255, 255, 255, 0.92);
+  --surface-border: rgba(255, 255, 255, 0.72);
 }
 
 html {
   min-height: 100%;
+}
+
+html.dark {
+  --bg-1: #020617;
+  --bg-2: #0f172a;
+  --ink-1: #e2e8f0;
+  --ink-2: #94a3b8;
+  --surface-1: rgba(15, 23, 42, 0.78);
+  --surface-2: rgba(15, 23, 42, 0.9);
+  --surface-border: rgba(100, 116, 139, 0.28);
 }
 
 body {
@@ -19,9 +32,19 @@ body {
   color: var(--ink-1);
   font-family: var(--font-pretendard), 'Noto Sans KR', 'Segoe UI', sans-serif;
   font-weight: 420;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
   background:
     radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
     radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.14), transparent 32%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+html.dark body {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(34, 211, 238, 0.12), transparent 30%),
+    radial-gradient(circle at 88% 4%, rgba(59, 130, 246, 0.1), transparent 26%),
     linear-gradient(180deg, var(--bg-1), var(--bg-2));
 }
 
