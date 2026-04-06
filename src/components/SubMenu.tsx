@@ -107,6 +107,7 @@ function SubMenu({
           <ul className="space-y-2">
             {items.map((article) => {
               const articleKey = `${article.id ?? 'null'}:${article.link}`;
+              const isSelected = selectedArticleKey === `${article.id}:${article.link}`;
 
               return (
                 <li
@@ -130,13 +131,29 @@ function SubMenu({
                         onSelectArticle(article);
                       }}
                       className={`block w-full rounded-xl border p-3 text-left transition ${
-                        selectedArticleKey === `${article.id}:${article.link}`
-                          ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)] dark:border-cyan-400 dark:bg-cyan-500/12 dark:shadow-[0_10px_26px_rgba(8,145,178,0.18)]'
+                        isSelected
+                          ? 'border-cyan-500 bg-cyan-50 shadow-[0_6px_18px_rgba(14,116,144,0.18)] dark:border-cyan-400 dark:bg-cyan-950/60 dark:shadow-[0_14px_30px_rgba(8,145,178,0.22)]'
                           : 'border-slate-200 bg-white/90 hover:border-cyan-300 hover:bg-cyan-50/40 dark:border-slate-700 dark:bg-slate-900/80 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/10'
                       }`}
                     >
-                      <div className="text-sm font-[650] text-slate-900 dark:text-slate-50">{article.title}</div>
-                      <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{article.sourceName}</div>
+                      <div
+                        className={`text-sm font-[650] ${
+                          isSelected
+                            ? 'text-slate-900 dark:text-cyan-50'
+                            : 'text-slate-900 dark:text-slate-50'
+                        }`}
+                      >
+                        {article.title}
+                      </div>
+                      <div
+                        className={`mt-1 text-xs ${
+                          isSelected
+                            ? 'text-slate-600 dark:text-cyan-100/75'
+                            : 'text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {article.sourceName}
+                      </div>
                     </a>
                   ) : (
                     <button
