@@ -1,6 +1,5 @@
 'use client';
 
-import posthog from 'posthog-js';
 import Link from 'next/link';
 import type { DailyBriefingArticle } from '../services/dailyBriefing';
 
@@ -37,25 +36,16 @@ export function BriefingArticleCard({
     </>
   );
 
-  const handleClick = () => {
-    posthog.capture('briefing_article_clicked', {
-      article_id: article.id,
-      title: article.title,
-      source: article.sourceName,
-      is_internal: article.id !== null,
-    });
-  };
-
   if (article.id !== null) {
     return (
-      <Link href={`/news/${article.id}`} className={className} onClick={handleClick}>
+      <Link href={`/news/${article.id}`} className={className}>
         {content}
       </Link>
     );
   }
 
   return (
-    <a href={article.link} target="_blank" rel="noreferrer" className={className} onClick={handleClick}>
+    <a href={article.link} target="_blank" rel="noreferrer" className={className}>
       {content}
     </a>
   );

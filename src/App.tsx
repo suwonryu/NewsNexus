@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import posthog from 'posthog-js';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
@@ -505,7 +504,6 @@ function App({
       return;
     }
 
-    posthog.capture('date_selected', { date });
     setSelectedDate(date);
     setSelectedArticleId(null);
     setSelectedArticleKey(null);
@@ -533,11 +531,6 @@ function App({
       return;
     }
 
-    posthog.capture('article_selected', {
-      article_id: article.id,
-      title: article.title,
-      source: article.sourceName,
-    });
     setSelectedArticleKey(articleKey);
 
     if (article.id === null) {
@@ -575,7 +568,6 @@ function App({
   };
 
   const handleShowArticleList = useCallback(() => {
-    posthog.capture('mobile_article_list_opened');
     setMobileView('list');
 
     if (typeof window !== 'undefined' && window.location.pathname !== '/') {
@@ -588,7 +580,6 @@ function App({
       return;
     }
 
-    posthog.capture('article_list_load_more', { date: selectedDate });
     setIsFetchingMore(true);
     try {
       const response = await fetchArticlesByDate(selectedDate, nextCursor);
@@ -642,7 +633,6 @@ function App({
             {selectedDate && (
               <Link
                 href={getBriefingHref(selectedDate)}
-                onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
                 className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
               >
                 {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
@@ -651,7 +641,6 @@ function App({
             <button
               type="button"
               onClick={() => {
-                posthog.capture('mobile_date_sheet_opened');
                 setIsDateSheetOpen(true);
               }}
               className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
@@ -707,7 +696,6 @@ function App({
           {selectedDate && (
             <Link
               href={getBriefingHref(selectedDate)}
-              onClick={() => posthog.capture('briefing_link_clicked', { date: selectedDate })}
               className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:shadow-[0_10px_28px_rgba(8,145,178,0.2)] dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
             >
               {isCurrentIsoDate(selectedDate)

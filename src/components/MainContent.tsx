@@ -1,6 +1,5 @@
 'use client';
 
-import posthog from 'posthog-js';
 import ReactMarkdown from 'react-markdown';
 import type { ArticleDetail, ArticleListItem } from '../types/article';
 
@@ -165,7 +164,6 @@ function MainContent({
         href={articleDetail.link}
         target="_blank"
         rel="noreferrer"
-        onClick={() => posthog.capture('article_original_link_clicked', { article_id: articleDetail.id, title: articleDetail.title })}
         className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:border-cyan-700 hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 md:font-semibold"
       >
         원문 보기
