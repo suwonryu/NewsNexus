@@ -52,6 +52,67 @@ html.dark body {
   min-height: 100vh;
 }
 
+.briefing-fade-in-up {
+  animation: briefing-fade-in-up 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--briefing-delay, 0ms);
+}
+
+.briefing-donut {
+  animation: briefing-donut-settle 820ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation-delay: 80ms;
+}
+
+.briefing-donut-segment {
+  stroke-dasharray: var(--segment-length) var(--segment-gap);
+  stroke-dashoffset: var(--segment-offset);
+  animation: briefing-donut-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--segment-delay, 0ms);
+}
+
+@keyframes briefing-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes briefing-donut-settle {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(-90deg) scale(1);
+  }
+}
+
+@keyframes briefing-donut-draw {
+  from {
+    opacity: 0.2;
+    stroke-dasharray: 0 var(--segment-circumference);
+  }
+
+  to {
+    opacity: 1;
+    stroke-dasharray: var(--segment-length) var(--segment-gap);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .briefing-fade-in-up,
+  .briefing-donut,
+  .briefing-donut-segment {
+    animation: none;
+  }
+}
+
 @media (max-width: 767px) {
   .mobile-app-shell {
     min-height: 100svh;

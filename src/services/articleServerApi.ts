@@ -1,10 +1,11 @@
 import type { ArticleDetail, ArticleListResponse, IsoDate } from '../types/article';
 import { getMockArticleDetail, getMockArticlesByDate, getMockDateTree } from './mockArticleData';
 import type {
+  DailyBriefingSentimentSummary,
   DailyBriefingKeywordDetail,
   DailyBriefingResponse,
 } from './dailyBriefing';
-import { buildFallbackDailyBriefingResponse } from './dailyBriefing';
+import { buildFallbackDailyBriefingResponse, createEmptySentimentSummary } from './dailyBriefing';
 import type { DateTreeResponse } from '../types/article';
 
 const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
@@ -250,6 +251,7 @@ function normalizeDailyBriefingResponse(
     keywordDetails: normalizeKeywordDetails(response.keywordDetails),
     sourceNames: response.sourceNames ?? [],
     featuredArticles: response.featuredArticles ?? [],
+    sentimentSummary: normalizeSentimentSummary(response.sentimentSummary),
     generatedAt: response.generatedAt ?? null,
   };
 }
@@ -278,4 +280,22 @@ function normalizeKeywordDetails(
       typeof item.description === 'string' &&
       item.description.length > 0,
   );
+}
+
+function normalizeSentimentSummary(
+  sentimentSummary: DailyBriefingResponse['sentimentSummary'] | undefined,
+): DailyBriefingSentimentSummary {
+  if (!sentimentSummary) {
+    return createEmptySentimentSummary();
+  }
+
+  return {
+    positiveCount: normalizeCount(sentimentSummary.positiveCount),
+    negativeCount: normalizeCount(sentimentSummary.negativeCount),
+    unrelatedCount: normalizeCount(sentimentSummary.unrelatedCount),
+  };
+}
+
+function normalizeCount(value: number | undefined): number {
+  return typeof value === 'number' && value > 0 ? value : 0;
 }

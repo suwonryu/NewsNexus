@@ -12,6 +12,12 @@ export interface DailyBriefingKeywordDetail {
   description: string;
 }
 
+export interface DailyBriefingSentimentSummary {
+  positiveCount: number;
+  negativeCount: number;
+  unrelatedCount: number;
+}
+
 export interface DailyBriefing {
   date: string;
   summary: string;
@@ -32,6 +38,7 @@ export interface DailyBriefingResponse {
   keywordDetails?: DailyBriefingKeywordDetail[];
   sourceNames: string[];
   featuredArticles: DailyBriefingArticle[];
+  sentimentSummary: DailyBriefingSentimentSummary;
   generatedAt: string | null;
 }
 
@@ -94,6 +101,7 @@ export function buildFallbackDailyBriefingResponse(
       keywordDetails: [],
       sourceNames: [],
       featuredArticles: [],
+      sentimentSummary: createEmptySentimentSummary(),
       generatedAt: null,
     };
   }
@@ -111,6 +119,7 @@ export function buildFallbackDailyBriefingResponse(
       keywordDetails: [],
       sourceNames: [],
       featuredArticles: [],
+      sentimentSummary: createEmptySentimentSummary(),
       generatedAt: null,
     };
   }
@@ -130,7 +139,16 @@ export function buildFallbackDailyBriefingResponse(
       link: article.link,
       sourceName: article.sourceName,
     })),
+    sentimentSummary: createEmptySentimentSummary(),
     generatedAt: new Date().toISOString(),
+  };
+}
+
+export function createEmptySentimentSummary(): DailyBriefingSentimentSummary {
+  return {
+    positiveCount: 0,
+    negativeCount: 0,
+    unrelatedCount: 0,
   };
 }
 
