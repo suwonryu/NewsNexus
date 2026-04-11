@@ -15,6 +15,7 @@ import {
 import type { ArticleDetail, ArticleListItem, DateTreeYear, IsoDate } from './types/article';
 
 const ARTICLE_LIST_PAGE_SIZE = 20;
+const HISTORY_SELECTED_DATE_KEY = '__newsnexusSelectedDate';
 
 function getTodayIsoDate(): string {
   const now = new Date();
@@ -83,6 +84,47 @@ function getArticleIsoDate(article: ArticleDetail, fallbackDate: string): string
     inferIsoDateFromArticleId(article.id) ??
     fallbackDate
   );
+}
+
+function getSelectedDateFromHistory(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const state = window.history.state;
+  if (!state || typeof state !== 'object') {
+    return null;
+  }
+
+  return normalizeToIsoDate(
+    HISTORY_SELECTED_DATE_KEY in state && typeof state[HISTORY_SELECTED_DATE_KEY] === 'string'
+      ? state[HISTORY_SELECTED_DATE_KEY]
+      : undefined,
+  );
+}
+
+function updateHistoryEntry(
+  mode: 'push' | 'replace',
+  url: string,
+  selectedDate: string | null,
+): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const currentState =
+    window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
+  const nextState = {
+    ...currentState,
+    [HISTORY_SELECTED_DATE_KEY]: selectedDate ?? getTodayIsoDate(),
+  };
+
+  if (mode === 'push') {
+    window.history.pushState(nextState, '', url);
+    return;
+  }
+
+  window.history.replaceState(nextState, '', url);
 }
 
 function getArticleKey(article: Pick<ArticleListItem, 'id' | 'link'>): string {
@@ -247,6 +289,41 @@ function App({
       setMobileView('detail');
     }
   }, [initialArticleId, initialArticleDetail, initialSelectedDate]);
+
+  useEffect(() => {
+    const historySelectedDate = getSelectedDateFromHistory();
+    if (!historySelectedDate || historySelectedDate === selectedDate) {
+      return;
+    }
+
+    setSelectedDate(historySelectedDate);
+    setArticles([]);
+    setNextCursor(null);
+    setHasMore(false);
+    setIsFetchingMore(false);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !selectedDate) {
+      return;
+    }
+
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/' && !/^\/news\/\d+$/.test(currentPath)) {
+      return;
+    }
+
+    const historySelectedDate = getSelectedDateFromHistory();
+    if (currentPath === '/' && historySelectedDate && historySelectedDate !== selectedDate) {
+      return;
+    }
+
+    if (historySelectedDate === selectedDate) {
+      return;
+    }
+
+    updateHistoryEntry('replace', currentPath, selectedDate);
+  }, [selectedArticleId, selectedDate]);
 
   useEffect(() => {
     if (initialDateTree.length > 0) {
@@ -470,6 +547,11 @@ function App({
     const handlePopState = () => {
       const currentPath = window.location.pathname;
       const matched = currentPath.match(/^\/news\/(\d+)$/);
+      const nextSelectedDate = getSelectedDateFromHistory() ?? getTodayIsoDate();
+
+      setSelectedDate((prevSelectedDate) =>
+        prevSelectedDate === nextSelectedDate ? prevSelectedDate : nextSelectedDate,
+      );
 
       if (!matched) {
         setSelectedArticleId(null);
@@ -516,8 +598,12 @@ function App({
     setMobileView('list');
     setIsDateSheetOpen(false);
 
-    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-      window.history.pushState({}, '', '/');
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname === '/') {
+        updateHistoryEntry('replace', '/', date);
+      } else {
+        updateHistoryEntry('push', '/', date);
+      }
     }
   };
 
@@ -543,7 +629,7 @@ function App({
       setArticleDetail(null);
       setIsDetailLoading(false);
       if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-        window.history.pushState({}, '', '/');
+        updateHistoryEntry('push', '/', selectedDate);
       }
     } else {
       if (isMobile) {
@@ -558,7 +644,7 @@ function App({
       setSelectedArticleId(article.id);
       const targetPath = `/news/${article.id}`;
       if (typeof window !== 'undefined' && window.location.pathname !== targetPath) {
-        window.history.pushState({}, '', targetPath);
+        updateHistoryEntry('push', targetPath, selectedDate);
       }
     }
 
@@ -571,9 +657,9 @@ function App({
     setMobileView('list');
 
     if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-      window.history.pushState({}, '', '/');
+      updateHistoryEntry('push', '/', selectedDate);
     }
-  }, []);
+  }, [selectedDate]);
 
   const handleLoadMore = useCallback(async () => {
     if (!selectedDate || !nextCursor || isListLoading || isFetchingMore) {
