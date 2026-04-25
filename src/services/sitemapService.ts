@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getArticlesByDate, getDailyBriefing } from './articleServerApi';
 
 export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
@@ -38,7 +39,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
     dayOffset < SITEMAP_ARTICLE_MAX_DAYS && articleEntries.length < SITEMAP_MAX_URLS;
     dayOffset += 1
   ) {
-    const targetDate = getIsoDateWithOffset(dayOffset);
+    const targetDate = getKoreaIsoDateWithOffset(dayOffset);
     let cursor: string | null = null;
     let pageGuard = 0;
 
@@ -99,7 +100,7 @@ async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
   const entries: SitemapEntry[] = [];
 
   for (let dayOffset = 1; dayOffset <= SITEMAP_BRIEFING_MAX_DAYS; dayOffset += 1) {
-    const targetDate = getIsoDateWithOffset(dayOffset);
+    const targetDate = getKoreaIsoDateWithOffset(dayOffset);
     const briefing = await getDailyBriefing(targetDate);
 
     if (briefing.status !== 'READY') {
@@ -153,15 +154,4 @@ function normalizeLastModified(value: string | undefined): string | null {
   }
 
   return parsed.toISOString();
-}
-
-function getIsoDateWithOffset(dayOffset: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() - dayOffset);
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
 }

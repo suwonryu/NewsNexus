@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import App from '../../../src/App';
+import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
 import {
   DEFAULT_OG_IMAGE,
   DEFAULT_OG_IMAGE_PATH,
@@ -105,7 +106,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  const selectedDate = getArticleIsoDate(article, getTodayIsoDate());
+  const selectedDate = getArticleIsoDate(article, getKoreaIsoDate());
   const [response, dateTree] = await Promise.all([
     getArticlesForInitialRender(selectedDate, article),
     getDateTree(),
@@ -334,12 +335,4 @@ async function getArticlesForInitialRender(
     nextCursor,
     hasMore,
   };
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }

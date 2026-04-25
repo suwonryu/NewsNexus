@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
 import { ThemeToggle } from '../../../src/components/ThemeToggle';
+import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
 import {
   DEFAULT_OG_IMAGE,
   DEFAULT_OG_IMAGE_PATH,
@@ -477,25 +478,16 @@ function isValidIsoDate(value: string): value is IsoDate {
 }
 
 function isCurrentIsoDate(date: string): boolean {
-  return date === getTodayIsoDate();
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return date === getKoreaIsoDate();
 }
 
 function getPreviousIsoDateFrom(date: string): string {
-  const target = new Date(`${date}T00:00:00`);
-  target.setDate(target.getDate() - 1);
+  const target = new Date(`${date}T00:00:00Z`);
+  target.setUTCDate(target.getUTCDate() - 1);
 
-  const year = target.getFullYear();
-  const month = String(target.getMonth() + 1).padStart(2, '0');
-  const day = String(target.getDate()).padStart(2, '0');
+  const year = target.getUTCFullYear();
+  const month = String(target.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(target.getUTCDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
 }

@@ -1,4 +1,5 @@
 import type { ArticleDetail, ArticleListResponse, IsoDate } from '../types/article';
+import { getKoreaIsoDate, getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getMockArticleDetail, getMockArticlesByDate, getMockDateTree } from './mockArticleData';
 import type {
   DailyBriefingSentimentSummary,
@@ -138,7 +139,7 @@ export async function getArticleIdsForSitemap(
   const maxPagesPerDay = options.maxPagesPerDay ?? 10;
 
   for (let dayOffset = 0; dayOffset < maxDaysToScan && ids.length < limit; dayOffset += 1) {
-    const targetDate = getIsoDateWithOffset(dayOffset);
+    const targetDate = getKoreaIsoDateWithOffset(dayOffset);
     let cursor: string | null = null;
     let pageGuard = 0;
 
@@ -226,17 +227,6 @@ function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail 
   };
 }
 
-function getIsoDateWithOffset(dayOffset: number): IsoDate {
-  const date = new Date();
-  date.setDate(date.getDate() - dayOffset);
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
 function normalizeDailyBriefingResponse(
   response: DailyBriefingResponse,
   requestedDate: IsoDate,
@@ -257,12 +247,7 @@ function normalizeDailyBriefingResponse(
 }
 
 function isCurrentIsoDate(date: string): boolean {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return date === `${year}-${month}-${day}`;
+  return date === getKoreaIsoDate();
 }
 
 function normalizeKeywordDetails(

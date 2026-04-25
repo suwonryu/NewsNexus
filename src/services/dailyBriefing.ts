@@ -1,4 +1,5 @@
 import type { ArticleListItem } from '../types/article';
+import { getKoreaIsoDate } from '../lib/koreaDate';
 
 export interface DailyBriefingArticle {
   id: number | null;
@@ -153,16 +154,7 @@ export function createEmptySentimentSummary(): DailyBriefingSentimentSummary {
 }
 
 function isCurrentIsoDate(date: string): boolean {
-  return date === getTodayIsoDate();
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return date === getKoreaIsoDate();
 }
 
 function extractKeywords(articles: ArticleListItem[]): string[] {

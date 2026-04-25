@@ -5,6 +5,7 @@ import type {
   DateTreeResponse,
   IsoDate,
 } from '../types/article';
+import { getKoreaIsoDate } from '../lib/koreaDate';
 
 const SOURCE_NAME = '오늘의 카카오뱅크';
 const SOURCE_URL = 'https://example.com/mock-article';
@@ -60,15 +61,14 @@ const MOCK_ARTICLES_BY_DATE: Record<IsoDate, ArticleDetail[]> = {
 };
 
 export function getMockDateTree(): DateTreeResponse {
-  const dayKey = formatIsoLocalDate(new Date());
+  const dayKey = getKoreaIsoDate();
   if (cachedDateTree?.dayKey === dayKey) {
     return cachedDateTree.response;
   }
 
   const yearsMap = new Map<number, Map<number, IsoDate[]>>();
   const start = new Date(`${START_DATE}T00:00:00`);
-  const today = new Date();
-  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = new Date(`${dayKey}T00:00:00`);
 
   for (const current = new Date(start); current <= end; current.setDate(current.getDate() + 1)) {
     const isoDate = formatIsoLocalDate(current);
