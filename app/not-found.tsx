@@ -37,11 +37,11 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#eef6ff_100%)] px-4 py-8 text-slate-900 transition dark:bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] dark:text-slate-100 md:px-6">
-      <div className="mx-auto flex max-w-2xl flex-col items-start rounded-[32px] border border-white/80 bg-white/88 p-8 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/70 dark:bg-slate-950/75 dark:shadow-[0_24px_56px_rgba(2,6,23,0.45)]">
+    <main className="min-h-screen px-4 py-8 text-slate-900 transition dark:text-slate-100 md:px-6">
+      <div className="mx-auto flex max-w-2xl flex-col items-start rounded-[28px] border border-[#d2d2d7] bg-white/95 p-8 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)]">
         <div className="flex w-full items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-300">404 Not Found</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700 dark:text-blue-300">404 Not Found</p>
             <h1 className="mt-4 text-3xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 md:text-4xl">
               {NOT_FOUND_TITLE}
             </h1>
@@ -53,7 +53,7 @@ export default function NotFound() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/"
-            className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+            className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
           >
             홈으로 이동
           </Link>

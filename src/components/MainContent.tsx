@@ -153,7 +153,7 @@ function MainContent({
         return 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
     }
   };
-  const containerClassName = `overflow-visible rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_18px_44px_rgba(2,6,23,0.4)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
+  const containerClassName = `overflow-visible rounded-[18px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
 
   if (!selectedDate) {
     return (
@@ -215,7 +215,7 @@ function MainContent({
           onClick={handleShare}
           aria-label="기사 링크 공유"
           title={shareStatus === 'copied' ? '링크 복사됨' : '기사 링크 공유'}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-500 transition hover:border-cyan-300 hover:text-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-cyan-400 dark:hover:text-cyan-200 dark:focus-visible:ring-offset-slate-950"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d2d2d7] bg-white text-slate-500 transition hover:border-[#0071e3] hover:text-[#0066cc] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-[#424245] dark:bg-[#272729] dark:text-slate-300 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff] dark:focus-visible:ring-offset-[#1d1d1f]"
         >
           <ShareIcon className="h-[1.05rem] w-[1.05rem]" />
         </button>
@@ -227,7 +227,7 @@ function MainContent({
         AI평가: {formatSentiment(articleDetail.sentiment)}
       </span>
       {shareStatus !== 'idle' && (
-        <p className="mt-2 text-xs text-cyan-700 dark:text-cyan-300" aria-live="polite">
+        <p className="mt-2 text-xs text-blue-700 dark:text-blue-300" aria-live="polite">
           {shareStatus === 'shared' && '공유 창을 열었습니다.'}
           {shareStatus === 'copied' && '링크를 복사했습니다.'}
           {shareStatus === 'error' && '링크를 공유하지 못했습니다.'}
@@ -240,7 +240,7 @@ function MainContent({
         href={articleDetail.link}
         target="_blank"
         rel="noreferrer"
-        className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:border-cyan-700 hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 md:font-semibold"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-[#0071e3] bg-[#0071e3] px-4 py-2 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#1d1d1f] md:font-semibold"
       >
         원문 보기
       </a>

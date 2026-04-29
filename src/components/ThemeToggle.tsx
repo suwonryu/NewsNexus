@@ -24,7 +24,7 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
     <div
       role="group"
       aria-label="테마 설정"
-      className={`inline-flex items-center gap-1 rounded-full border border-slate-200/90 bg-white/88 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/70 dark:bg-slate-900/75 ${
+      className={`inline-flex items-center gap-1 rounded-full border border-[#d2d2d7] bg-white p-1 shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#272729] ${
         compact ? 'scale-[0.96]' : ''
       }`}
     >
@@ -43,12 +43,12 @@ export function ThemeToggle({ compact = false }: ThemeToggleProps) {
                 ? `${label} (${resolvedTheme === 'dark' ? '현재 다크' : '현재 라이트'})`
                 : label
             }
-            className={`inline-flex items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
+            className={`inline-flex items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#272729] ${
               compact ? 'h-8 w-8' : 'h-9 w-9'
             } ${
               isActive
-                ? 'bg-cyan-600 text-white shadow-[0_8px_18px_rgba(8,145,178,0.28)]'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-cyan-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-cyan-300'
+                ? 'bg-[#0071e3] text-white shadow-[0_8px_18px_rgba(0,113,227,0.22)]'
+                : 'text-slate-500 hover:bg-[#f5f5f7] hover:text-[#0066cc] dark:text-slate-300 dark:hover:bg-[#2a2a2c] dark:hover:text-[#2997ff]'
             }`}
           >
             <Icon className={compact ? 'h-4 w-4' : 'h-[1.05rem] w-[1.05rem]'} />

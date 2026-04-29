@@ -35,7 +35,7 @@ const SENTIMENT_SEGMENTS = [
 function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
   if (briefing.status !== 'READY' || !briefing.summary) {
     return (
-      <section className="rounded-[32px] border border-white/70 bg-white/80 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+      <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
         <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Daily Briefing</p>
         <h1 className="mt-3 text-3xl font-[760] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
           {briefing.date} 브리핑
@@ -53,11 +53,11 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
     briefing.sentimentSummary.unrelatedCount;
 
   return (
-    <section className="relative overflow-hidden rounded-[36px] border border-white/75 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.34),transparent_26%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.16),transparent_28%),linear-gradient(135deg,rgba(248,250,252,0.97),rgba(236,254,255,0.96))] p-6 shadow-[0_24px_60px_rgba(14,116,144,0.12)] dark:border-slate-700/60 dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(37,99,235,0.18),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.97),rgba(8,47,73,0.92))] dark:shadow-[0_28px_68px_rgba(2,6,23,0.48)] lg:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.28),transparent)] opacity-60 dark:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.08),transparent)] dark:opacity-70" />
+    <section className="relative overflow-hidden rounded-[28px] border border-[#d2d2d7] bg-white p-6 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)] lg:p-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/80 dark:bg-white/10" />
       <div className="relative grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-800/80 dark:text-cyan-200/80">
+          <p className="text-[11px] uppercase tracking-[0.24em] text-blue-800/80 dark:text-blue-200/80">
             Daily Briefing
           </p>
           <h1 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
@@ -71,7 +71,7 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
             {briefing.keywords.map((keyword) => (
               <span
                 key={keyword}
-                className="rounded-full border border-cyan-200/90 bg-white/78 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:border-cyan-400/30 dark:bg-slate-950/35 dark:text-slate-100"
+                className="rounded-full border border-blue-200/90 bg-white/78 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:border-blue-400/30 dark:bg-slate-950/35 dark:text-slate-100"
               >
                 #{keyword}
               </span>
@@ -79,7 +79,7 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
           </div>
         </div>
 
-        <section className="rounded-[28px] border border-white/75 bg-white/72 p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-950/38 dark:shadow-[0_18px_40px_rgba(2,6,23,0.34)]">
+        <section className="rounded-[18px] border border-[#d2d2d7] bg-[#f5f5f7] p-5 dark:border-[#424245] dark:bg-[#272729]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -89,7 +89,7 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
                 AI 평가 분포
               </h2>
             </div>
-            <span className="rounded-full border border-cyan-200/80 bg-cyan-50/80 px-3 py-1 text-xs font-medium text-cyan-800 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-200">
+            <span className="rounded-full border border-blue-200/80 bg-blue-50/80 px-3 py-1 text-xs font-medium text-blue-800 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200">
               수집 기사 {briefing.articleCount}건
             </span>
           </div>

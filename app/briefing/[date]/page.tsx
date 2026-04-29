@@ -129,11 +129,11 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
             <>
               <Link
                 href="/"
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
+                className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-slate-600"
               >
                 기사 탐색으로
               </Link>
-              <span className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200">
+              <span className="inline-flex items-center rounded-full border border-[#0071e3] bg-blue-50 px-4 py-2 text-sm font-medium text-[#0066cc] dark:border-[#2997ff]/60 dark:bg-blue-500/10 dark:text-[#2997ff]">
                 {date}
               </span>
             </>
@@ -143,7 +143,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
         <DailyBriefingCard briefing={briefing} />
 
         <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+          <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Featured</p>
@@ -168,7 +168,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           </section>
 
           <div className="grid gap-4">
-            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+            <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Signals</p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
                 주목 포인트
@@ -177,9 +177,9 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
                 {getSignalItems(briefing).map((signal, index) => (
                   <div
                     key={signal.keyword}
-                    className="rounded-3xl border border-cyan-100 bg-cyan-50/70 px-4 py-4 dark:border-cyan-500/20 dark:bg-cyan-500/10"
+                    className="rounded-[18px] border border-blue-100 bg-blue-50/70 px-4 py-4 dark:border-blue-500/20 dark:bg-blue-500/10"
                   >
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
                       Point {index + 1}
                     </p>
                     <p className="mt-2 text-base font-[650] text-slate-900 dark:text-slate-50">#{signal.keyword}</p>
@@ -198,7 +198,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
               </div>
             </section>
 
-            <section className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_24px_54px_rgba(2,6,23,0.42)]">
+            <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Sources</p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
                 출처
@@ -284,8 +284,8 @@ function PreparingBriefingState({
           }
         />
 
-        <section className="relative overflow-hidden rounded-[36px] border border-white/75 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(135deg,rgba(255,251,235,0.97),rgba(248,250,252,0.97))] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-slate-700/60 dark:bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.97),rgba(41,37,36,0.94))] dark:shadow-[0_28px_64px_rgba(2,6,23,0.48)] lg:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.28),transparent)] opacity-60 dark:bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.06),transparent)] dark:opacity-70" />
+        <section className="relative overflow-hidden rounded-[28px] border border-[#d2d2d7] bg-white p-6 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)] lg:p-8">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/80 dark:bg-white/10" />
           <div className="relative">
             <p className="text-[11px] uppercase tracking-[0.24em] text-amber-700/90 dark:text-amber-200/90">
               Preparing Briefing
@@ -319,7 +319,7 @@ function PreparingBriefingState({
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href={`/briefing/${previousDate}`}
-                className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+                className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
               >
                 {previousDate} 브리핑 보기
               </Link>
@@ -361,7 +361,7 @@ function NotFoundBriefingState({
           }
         />
 
-        <section className="rounded-[36px] border border-white/75 bg-white/82 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-slate-700/60 dark:bg-slate-950/72 dark:shadow-[0_28px_64px_rgba(2,6,23,0.48)] lg:p-8">
+        <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)] lg:p-8">
           <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">No Briefing</p>
           <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
             이 날짜의 브리핑 데이터가 없습니다
@@ -374,7 +374,7 @@ function NotFoundBriefingState({
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+              className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
             >
               기사 탐색으로 이동
             </Link>
@@ -396,7 +396,7 @@ function StatusCard({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/80 bg-white/76 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:border-slate-700/55 dark:bg-slate-950/40 dark:shadow-[0_14px_30px_rgba(2,6,23,0.32)]">
+    <div className="rounded-[18px] border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-4 dark:border-[#424245] dark:bg-[#272729]">
       <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{label}</p>
       <p className="mt-2 text-2xl font-[760] tracking-[-0.04em] text-slate-950 dark:text-slate-50">{value}</p>
       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
@@ -420,7 +420,7 @@ function BriefingHeader({
   actionCount: number;
 }) {
   return (
-    <header className="mb-4 rounded-2xl border border-white/70 bg-white/82 px-5 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_20px_48px_rgba(2,6,23,0.42)] md:rounded-[28px]">
+    <header className="mb-4 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-5 py-4 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] md:rounded-[28px]">
       <div className="md:flex md:items-center md:justify-between md:gap-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

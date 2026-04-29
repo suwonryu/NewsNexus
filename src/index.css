@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --bg-1: #f7fafc;
-  --bg-2: #eef2ff;
-  --ink-1: #0f172a;
-  --ink-2: #475569;
+  --bg-1: #f5f5f7;
+  --bg-2: #ffffff;
+  --ink-1: #1d1d1f;
+  --ink-2: #6e6e73;
 }
 
 body {
@@ -15,9 +15,7 @@ body {
   color: var(--ink-1);
   font-family: var(--font-pretendard), 'Noto Sans KR', 'Segoe UI', sans-serif;
   background:
-    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
-    radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.14), transparent 32%),
-    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-1) 100%);
 }
 
 #root {

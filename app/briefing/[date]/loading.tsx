@@ -15,13 +15,13 @@ export default function Loading() {
             <div className="mt-3 hidden flex-wrap items-center gap-2 md:mt-0 md:flex md:justify-end">
               <div className="h-10 w-[136px] rounded-full bg-slate-200 dark:bg-slate-800" />
               <div className="h-10 w-28 rounded-full bg-slate-200 dark:bg-slate-800" />
-              <div className="h-10 w-28 rounded-full bg-cyan-100 dark:bg-cyan-500/15" />
+              <div className="h-10 w-28 rounded-full bg-blue-100 dark:bg-blue-500/15" />
             </div>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 md:hidden">
             <div className="h-10 w-28 rounded-full bg-slate-200 dark:bg-slate-800" />
-            <div className="h-10 w-28 rounded-full bg-cyan-100 dark:bg-cyan-500/15" />
+            <div className="h-10 w-28 rounded-full bg-blue-100 dark:bg-blue-500/15" />
           </div>
         </header>
 
@@ -62,9 +62,9 @@ export default function Loading() {
               <div className="h-3 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
               <div className="mt-3 h-8 w-28 rounded-full bg-slate-200 dark:bg-slate-800" />
               <div className="mt-4 space-y-3">
-                <div className="h-28 rounded-3xl bg-cyan-50 dark:bg-cyan-500/10" />
-                <div className="h-28 rounded-3xl bg-cyan-50 dark:bg-cyan-500/10" />
-                <div className="h-28 rounded-3xl bg-cyan-50 dark:bg-cyan-500/10" />
+                <div className="h-28 rounded-3xl bg-blue-50 dark:bg-blue-500/10" />
+                <div className="h-28 rounded-3xl bg-blue-50 dark:bg-blue-500/10" />
+                <div className="h-28 rounded-3xl bg-blue-50 dark:bg-blue-500/10" />
               </div>
             </section>
 

@@ -703,7 +703,7 @@ function App({
   return (
     <div className="mobile-app-shell md:min-h-screen md:p-6">
       <div className="mobile-app-shell-body md:hidden flex min-h-0 flex-col gap-3">
-        <header className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur transition dark:border-slate-700/60 dark:bg-slate-950/70 dark:shadow-[0_12px_32px_rgba(2,6,23,0.45)]">
+        <header className="rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
@@ -719,7 +719,7 @@ function App({
             {selectedDate && (
               <Link
                 href={getBriefingHref(selectedDate)}
-                className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+                className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-3 py-1 text-xs font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black dark:hover:border-[#2997ff]"
               >
                 {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
               </Link>
@@ -729,7 +729,7 @@ function App({
               onClick={() => {
                 setIsDateSheetOpen(true);
               }}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
+              className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff]"
             >
               {selectedDate ?? '날짜 선택'}
             </button>
@@ -753,7 +753,7 @@ function App({
             <button
               type="button"
               onClick={handleShowArticleList}
-              className="self-start rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-950/75 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
+              className="self-start rounded-full border border-[#d2d2d7] bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff]"
             >
               목록으로
             </button>
@@ -782,7 +782,7 @@ function App({
           {selectedDate && (
             <Link
               href={getBriefingHref(selectedDate)}
-              className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 shadow-[0_8px_18px_rgba(6,182,212,0.12)] transition hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:shadow-[0_10px_28px_rgba(8,145,178,0.2)] dark:hover:border-cyan-400 dark:hover:bg-cyan-500/20"
+              className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(0,113,227,0.16)] transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black dark:shadow-[0_10px_28px_rgba(41,151,255,0.18)]"
             >
               {isCurrentIsoDate(selectedDate)
                 ? `${selectedDate} 브리핑 준비 중`
@@ -833,7 +833,7 @@ function App({
           }`}
         />
         <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-3xl border-t border-white/60 bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(15,23,42,0.2)] transition-transform duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950 dark:shadow-[0_-20px_48px_rgba(2,6,23,0.55)] ${
+          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-[28px] border-t border-[#d2d2d7] bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_-20px_48px_rgba(0,0,0,0.5)] ${
             isDateSheetOpen ? 'translate-y-0' : 'translate-y-full'
           } mobile-bottom-sheet`}
         >
