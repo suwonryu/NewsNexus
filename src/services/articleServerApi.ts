@@ -14,7 +14,6 @@ const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
 const KABANG_ARTICLE_API_BASE = `${KABANG_API_ROOT}/new`;
 const KABANG_BRIEFING_API_BASE = `${KABANG_API_ROOT}/briefings`;
 const REVALIDATE_SECONDS = 300;
-const BRIEFING_REVALIDATE_SECONDS = 3600;
 
 interface KabangListItem {
   id: number | null;
@@ -94,17 +93,15 @@ export async function getArticlesByDate(
   }
 }
 
-export async function getDailyBriefing(date: IsoDate): Promise<DailyBriefingResponse> {
-  const fetchOptions = isCurrentIsoDate(date)
-    ? ({ cache: 'no-store' } satisfies RequestInit)
-    : ({ next: { revalidate: BRIEFING_REVALIDATE_SECONDS } } satisfies RequestInit & {
-        next: { revalidate: number };
-      });
+export async function getDailyBriefing(
+  date: IsoDate,
+  { enqueue = true }: { enqueue?: boolean } = {},
+): Promise<DailyBriefingResponse> {
 
   try {
     const response = await getJson<DailyBriefingResponse>(
-      `${KABANG_BRIEFING_API_BASE}/${date}`,
-      fetchOptions,
+      `${KABANG_BRIEFING_API_BASE}/${date}?enqueue=${enqueue}`,
+      { cache: 'no-store' },
     );
 
     return normalizeDailyBriefingResponse(response, date);

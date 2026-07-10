@@ -54,7 +54,7 @@ async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
 
   for (let dayOffset = 1; dayOffset <= SITEMAP_BRIEFING_MAX_DAYS; dayOffset += 1) {
     const targetDate = getKoreaIsoDateWithOffset(dayOffset);
-    const briefing = await getDailyBriefing(targetDate);
+    const briefing = await getDailyBriefing(targetDate, { enqueue: false });
 
     if (briefing.status !== 'READY') {
       continue;
