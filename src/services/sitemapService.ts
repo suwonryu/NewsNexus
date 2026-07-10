@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
-import { getArticlesByDate, getDailyBriefing } from './articleServerApi';
+import { getDailyBriefing } from './articleServerApi';
 
 export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
 export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
@@ -9,11 +9,7 @@ export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
   60,
   86400,
 );
-const SITEMAP_MAX_URLS = readIntEnv('SITEMAP_MAX_URLS', 500, 50, 50000);
-const SITEMAP_ARTICLE_MAX_DAYS = readIntEnv('SITEMAP_ARTICLE_MAX_DAYS', 14, 1, 3650);
-const SITEMAP_BRIEFING_MAX_DAYS = readIntEnv('SITEMAP_BRIEFING_MAX_DAYS', 7, 0, 3650);
-const SITEMAP_MAX_PAGES_PER_DAY = readIntEnv('SITEMAP_MAX_PAGES_PER_DAY', 3, 1, 200);
-const SITEMAP_ARTICLE_PAGE_SIZE = readIntEnv('SITEMAP_ARTICLE_PAGE_SIZE', 50, 10, 200);
+const SITEMAP_BRIEFING_MAX_DAYS = readIntEnv('SITEMAP_BRIEFING_MAX_DAYS', 30, 0, 3650);
 
 export interface SitemapEntry {
   path: string;
@@ -31,55 +27,12 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
       priority: '1.0',
     },
   ];
-  const articleEntries: SitemapEntry[] = [];
-  const seen = new Set<number>();
-
-  for (
-    let dayOffset = 0;
-    dayOffset < SITEMAP_ARTICLE_MAX_DAYS && articleEntries.length < SITEMAP_MAX_URLS;
-    dayOffset += 1
-  ) {
-    const targetDate = getKoreaIsoDateWithOffset(dayOffset);
-    let cursor: string | null = null;
-    let pageGuard = 0;
-
-    do {
-      const page = await getArticlesByDate(targetDate, cursor, SITEMAP_ARTICLE_PAGE_SIZE);
-
-      for (const item of page.items) {
-        if (item.id === null || seen.has(item.id)) {
-          continue;
-        }
-
-        seen.add(item.id);
-        articleEntries.push({
-          path: `/news/${item.id}`,
-          lastModified: normalizeLastModified(item.publishedDate),
-          changeFrequency: 'daily',
-          priority: '0.7',
-        });
-
-        if (articleEntries.length >= SITEMAP_MAX_URLS) {
-          break;
-        }
-      }
-
-      cursor = page.nextCursor;
-      pageGuard += 1;
-    } while (
-      cursor &&
-      articleEntries.length < SITEMAP_MAX_URLS &&
-      pageGuard < SITEMAP_MAX_PAGES_PER_DAY
-    );
-  }
-
-  entries.push(...articleEntries);
   entries.push(...(await getReadyBriefingSitemapEntries()));
 
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v2'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
@@ -111,7 +64,7 @@ async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
       path: `/briefing/${targetDate}`,
       lastModified: normalizeLastModified(briefing.generatedAt ?? targetDate),
       changeFrequency: 'daily',
-      priority: '0.6',
+      priority: '0.8',
     });
   }
 

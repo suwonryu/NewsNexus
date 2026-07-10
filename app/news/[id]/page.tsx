@@ -81,6 +81,10 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     alternates: {
       canonical,
     },
+    robots: {
+      index: false,
+      follow: true,
+    },
     openGraph: {
       ...buildArticleOpenGraph({
         title: summaryTitle,

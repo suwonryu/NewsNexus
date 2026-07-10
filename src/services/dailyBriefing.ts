@@ -19,6 +19,14 @@ export interface DailyBriefingSentimentSummary {
   unrelatedCount: number;
 }
 
+export interface DailyBriefingEditorialAnalysis {
+  keyChanges: string[];
+  changeFromPreviousDay: string | null;
+  kakaoBankImpact: string | null;
+  sourcePerspective: string | null;
+  watchPoint: string | null;
+}
+
 export interface DailyBriefing {
   date: string;
   summary: string;
@@ -41,6 +49,7 @@ export interface DailyBriefingResponse {
   featuredArticles: DailyBriefingArticle[];
   sentimentSummary: DailyBriefingSentimentSummary;
   generatedAt: string | null;
+  editorialAnalysis: DailyBriefingEditorialAnalysis | null;
 }
 
 const STOPWORDS = new Set([
@@ -104,6 +113,7 @@ export function buildFallbackDailyBriefingResponse(
       featuredArticles: [],
       sentimentSummary: createEmptySentimentSummary(),
       generatedAt: null,
+      editorialAnalysis: null,
     };
   }
 
@@ -122,6 +132,7 @@ export function buildFallbackDailyBriefingResponse(
       featuredArticles: [],
       sentimentSummary: createEmptySentimentSummary(),
       generatedAt: null,
+      editorialAnalysis: null,
     };
   }
 
@@ -142,6 +153,7 @@ export function buildFallbackDailyBriefingResponse(
     })),
     sentimentSummary: createEmptySentimentSummary(),
     generatedAt: new Date().toISOString(),
+    editorialAnalysis: null,
   };
 }
 

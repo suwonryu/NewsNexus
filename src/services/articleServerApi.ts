@@ -3,6 +3,7 @@ import { getKoreaIsoDate, getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getMockArticleDetail, getMockArticlesByDate, getMockDateTree } from './mockArticleData';
 import type {
   DailyBriefingSentimentSummary,
+  DailyBriefingEditorialAnalysis,
   DailyBriefingKeywordDetail,
   DailyBriefingResponse,
 } from './dailyBriefing';
@@ -243,6 +244,7 @@ function normalizeDailyBriefingResponse(
     featuredArticles: response.featuredArticles ?? [],
     sentimentSummary: normalizeSentimentSummary(response.sentimentSummary),
     generatedAt: response.generatedAt ?? null,
+    editorialAnalysis: normalizeEditorialAnalysis(response.editorialAnalysis),
   };
 }
 
@@ -279,6 +281,51 @@ function normalizeSentimentSummary(
     negativeCount: normalizeCount(sentimentSummary.negativeCount),
     unrelatedCount: normalizeCount(sentimentSummary.unrelatedCount),
   };
+}
+
+function normalizeEditorialAnalysis(
+  editorialAnalysis: DailyBriefingResponse['editorialAnalysis'] | undefined,
+): DailyBriefingEditorialAnalysis | null {
+  if (!editorialAnalysis) {
+    return null;
+  }
+
+  const keyChanges = Array.isArray(editorialAnalysis.keyChanges)
+    ? editorialAnalysis.keyChanges.filter(
+        (item): item is string => typeof item === 'string' && item.trim().length > 0,
+      )
+    : [];
+  const changeFromPreviousDay = normalizeOptionalText(editorialAnalysis.changeFromPreviousDay);
+  const kakaoBankImpact = normalizeOptionalText(editorialAnalysis.kakaoBankImpact);
+  const sourcePerspective = normalizeOptionalText(editorialAnalysis.sourcePerspective);
+  const watchPoint = normalizeOptionalText(editorialAnalysis.watchPoint);
+
+  if (
+    keyChanges.length === 0 &&
+    !changeFromPreviousDay &&
+    !kakaoBankImpact &&
+    !sourcePerspective &&
+    !watchPoint
+  ) {
+    return null;
+  }
+
+  return {
+    keyChanges,
+    changeFromPreviousDay,
+    kakaoBankImpact,
+    sourcePerspective,
+    watchPoint,
+  };
+}
+
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized || null;
 }
 
 function normalizeCount(value: number | undefined): number {

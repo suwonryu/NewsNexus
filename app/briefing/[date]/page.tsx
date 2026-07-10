@@ -116,10 +116,19 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
     return <NotFoundBriefingState date={date} />;
   }
 
+  const siteUrl = getSiteUrl();
+  const canonical = `${siteUrl}/briefing/${date}`;
+  const structuredData = buildBriefingStructuredData({ briefing, canonical, siteUrl });
+
   return (
-    <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
-      <div className="mx-auto max-w-[1320px]">
-        <BriefingHeader
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
+        <div className="mx-auto max-w-[1320px]">
+          <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
@@ -140,9 +149,11 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           }
         />
 
-        <DailyBriefingCard briefing={briefing} />
+          <DailyBriefingCard briefing={briefing} />
 
-        <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <EditorialAnalysisSection briefing={briefing} />
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -215,9 +226,111 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
               </div>
             </section>
           </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+function buildBriefingStructuredData({
+  briefing,
+  canonical,
+  siteUrl,
+}: {
+  briefing: DailyBriefingResponse;
+  canonical: string;
+  siteUrl: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: `${formatKoreanDate(briefing.date)} 카카오뱅크 뉴스 브리핑`,
+    description: getMetaDescription(briefing.summary),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonical,
+    },
+    datePublished: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
+    dateModified: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
+    image: `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`,
+    inLanguage: 'ko-KR',
+    author: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+    },
+    about: briefing.keywords.map((keyword) => ({
+      '@type': 'Thing',
+      name: keyword,
+    })),
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: briefing.featuredArticles.map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Article',
+          headline: article.title,
+          url: article.link,
+          publisher: {
+            '@type': 'Organization',
+            name: article.sourceName,
+          },
+        },
+      })),
+    },
+  };
+}
+
+function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingResponse }) {
+  const analysis = briefing.editorialAnalysis;
+
+  if (!analysis) {
+    return null;
+  }
+
+  const details = [
+    { label: '전일 대비', value: analysis.changeFromPreviousDay },
+    { label: '카카오뱅크 영향', value: analysis.kakaoBankImpact },
+    { label: '출처 관점', value: analysis.sourcePerspective },
+    { label: '다음 관찰', value: analysis.watchPoint },
+  ].filter((item): item is { label: string; value: string } => Boolean(item.value));
+
+  if (analysis.keyChanges.length === 0 && details.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mt-4 border-y border-slate-200 py-6 dark:border-slate-700">
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Editorial Analysis</p>
+      <h2 className="mt-2 text-2xl font-[740] text-slate-950 dark:text-slate-50">편집 분석</h2>
+
+      {analysis.keyChanges.length > 0 && (
+        <ol className="mt-5 grid gap-3 md:grid-cols-2">
+          {analysis.keyChanges.map((item, index) => (
+            <li key={item} className="border-l-2 border-blue-500 pl-4 text-sm leading-6 text-slate-700 dark:text-slate-200">
+              <span className="mr-2 text-xs font-semibold text-blue-700 dark:text-blue-300">0{index + 1}</span>
+              {item}
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {details.length > 0 && (
+        <dl className="mt-6 grid gap-x-8 gap-y-5 md:grid-cols-2">
+          {details.map((detail) => (
+            <div key={detail.label}>
+              <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">{detail.label}</dt>
+              <dd className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">{detail.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   );
 }
 
