@@ -149,6 +149,8 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           }
         />
 
+          <BriefingDateNavigation date={date} />
+
           <DailyBriefingCard briefing={briefing} />
 
           <EditorialAnalysisSection briefing={briefing} />
@@ -331,6 +333,34 @@ function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingRespons
         </dl>
       )}
     </section>
+  );
+}
+
+function BriefingDateNavigation({ date }: { date: string }) {
+  const previousDate = getPreviousIsoDateFrom(date);
+  const nextDate = getNextIsoDateFrom(date);
+
+  return (
+    <nav
+      aria-label="브리핑 날짜 이동"
+      className="mb-4 flex items-center justify-between border-y border-slate-200 py-3 dark:border-slate-700"
+    >
+      <Link
+        href={`/briefing/${previousDate}`}
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
+      >
+        <span aria-hidden="true">&larr;</span>
+        <span>이전 날짜</span>
+      </Link>
+      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{date}</span>
+      <Link
+        href={`/briefing/${nextDate}`}
+        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
+      >
+        <span>다음 날짜</span>
+        <span aria-hidden="true">&rarr;</span>
+      </Link>
+    </nav>
   );
 }
 
@@ -597,6 +627,17 @@ function isCurrentIsoDate(date: string): boolean {
 function getPreviousIsoDateFrom(date: string): string {
   const target = new Date(`${date}T00:00:00Z`);
   target.setUTCDate(target.getUTCDate() - 1);
+
+  const year = target.getUTCFullYear();
+  const month = String(target.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(target.getUTCDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getNextIsoDateFrom(date: string): string {
+  const target = new Date(`${date}T00:00:00Z`);
+  target.setUTCDate(target.getUTCDate() + 1);
 
   const year = target.getUTCFullYear();
   const month = String(target.getUTCMonth() + 1).padStart(2, '0');
