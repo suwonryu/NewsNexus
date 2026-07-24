@@ -1,5 +1,6 @@
 import type {
   ArticleDetail,
+  ArticleImpactAnalysis,
   ArticleListItem,
   ArticleListResponse,
   DateTreeResponse,
@@ -13,6 +14,7 @@ import {
 
 const API_BASE = '/api/articles';
 const KABANG_API_BASE = 'https://fury.kabang.app/v2/kabang/new';
+const KABANG_ANALYSIS_API_BASE = 'https://fury.kabang.app/v2/kabang/analysis/articles';
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
@@ -54,8 +56,11 @@ export async function fetchArticlesByDate(
 
 export async function fetchArticleDetail(id: number): Promise<ArticleDetail> {
   try {
-    const response = await getJson<KabangDetailResponse>(`${KABANG_API_BASE}/${id}`);
-    return mapKabangDetailResponse(response);
+    const [response, analysis] = await Promise.all([
+      getJson<KabangDetailResponse>(`${KABANG_API_BASE}/${id}`),
+      getOptionalArticleAnalysis(id),
+    ]);
+    return mapKabangDetailResponse(response, analysis);
   } catch {
     const fallback = getMockArticleDetail(id);
 
@@ -140,7 +145,18 @@ function mapKabangListResponse(response: KabangListResponse): ArticleListRespons
   };
 }
 
-function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail {
+async function getOptionalArticleAnalysis(id: number): Promise<ArticleImpactAnalysis | null> {
+  try {
+    return await getJson<ArticleImpactAnalysis>(`${KABANG_ANALYSIS_API_BASE}/${id}`);
+  } catch {
+    return null;
+  }
+}
+
+function mapKabangDetailResponse(
+  response: KabangDetailResponse,
+  analysis: ArticleImpactAnalysis | null = null,
+): ArticleDetail {
   return {
     id: response.id,
     title: response.title,
@@ -149,6 +165,7 @@ function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail 
     cursor: response.cursor ?? null,
     summary: response.summary,
     sentiment: response.sentiment,
+    analysis,
     publishedDate: response.publishedDate
       ? formatDateForDisplay(response.publishedDate)
       : response.date

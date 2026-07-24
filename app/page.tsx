@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
-import App from '../src/App';
+import { NewsHome } from '../src/components/home/NewsHome';
 import { getKoreaIsoDate } from '../src/lib/koreaDate';
 import { SITE_DESCRIPTION, SITE_NAME } from '../src/lib/siteMetadata';
 import { getSiteUrl } from '../src/lib/siteUrl';
-import { getArticlesByDate, getDateTree } from '../src/services/articleServerApi';
+import { getArticlesByDate } from '../src/services/articleServerApi';
+import { getHomeData } from '../src/services/home';
+import { getPublishedTopics } from '../src/services/topics';
 
 export const metadata: Metadata = {
+  title: '카카오뱅크 뉴스 브리핑과 주요 이슈',
+  description:
+    '카카오뱅크 관련 뉴스를 이슈별로 묶고, 직접 영향과 다음 관찰 포인트를 매일 브리핑합니다.',
   alternates: {
     canonical: '/',
   },
@@ -13,18 +18,28 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const selectedDate = getKoreaIsoDate();
-  const [response, dateTree] = await Promise.all([
+  const [home, response, topics] = await Promise.all([
+    getHomeData(),
     getArticlesByDate(selectedDate, null),
-    getDateTree(),
+    getPublishedTopics(),
   ]);
   const siteUrl = getSiteUrl();
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    inLanguage: 'ko-KR',
-    url: `${siteUrl}/`,
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        inLanguage: 'ko-KR',
+        url: `${siteUrl}/`,
+      },
+      {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: `${siteUrl}/`,
+      },
+    ],
   };
 
   return (
@@ -33,12 +48,10 @@ export default async function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <App
-        initialSelectedDate={selectedDate}
-        initialDateTree={dateTree.years}
-        initialArticles={response.items}
-        initialNextCursor={response.nextCursor}
-        initialHasMore={response.hasNext}
+      <NewsHome
+        home={home}
+        recentArticles={response.items}
+        publishedTopicSlugs={topics.map((topic) => topic.slug)}
       />
     </>
   );

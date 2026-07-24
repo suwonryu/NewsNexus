@@ -2,6 +2,7 @@ import localFont from 'next/font/local';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ThemeProvider } from '../src/components/ThemeProvider';
+import { WebVitalsReporter } from '../src/components/WebVitalsReporter';
 import {
   DEFAULT_OG_IMAGE,
   DEFAULT_OG_IMAGE_PATH,
@@ -77,7 +78,10 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={`${pretendard.variable} transition-colors duration-300`}>
         <script dangerouslySetInnerHTML={{ __html: themeInitializerScript }} />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <WebVitalsReporter />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

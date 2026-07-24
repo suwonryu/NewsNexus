@@ -42,4 +42,21 @@ export interface ArticleDetail {
   cursor?: string | null;
   summary: string | null;
   sentiment: string | null;
+  analysis?: ArticleImpactAnalysis | null;
+}
+
+export interface ArticleImpactAnalysis {
+  relevanceLevel: 'DIRECT' | 'INDUSTRY' | 'IRRELEVANT';
+  relevanceConfidence: number;
+  relevanceReason: string;
+  matchedEntities: string[];
+  clusterId: string | null;
+  clusterTitle: string | null;
+  impact: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;
+  impactConfidence: number;
+  impactHorizon: 'SHORT' | 'MEDIUM' | 'LONG' | null;
+  impactDimensions: string[];
+  impactReason: string | null;
+  evidenceArticleIds: number[];
+  analysisVersion: string;
 }

@@ -76,27 +76,6 @@ function MainContent({
     }
   }, [articleDetail]);
 
-  const normalizeSentiment = (sentiment: string | null) => {
-    if (!sentiment) {
-      return 'UNKNOWN';
-    }
-
-    const normalized = sentiment.trim().toUpperCase();
-
-    if (normalized === 'POSITIVE' || normalized === '긍정') {
-      return 'POSITIVE';
-    }
-
-    if (normalized === 'NEGATIVE' || normalized === '부정') {
-      return 'NEGATIVE';
-    }
-
-    if (normalized === 'NEUTRAL' || normalized === '중립') {
-      return 'NEUTRAL';
-    }
-
-    return 'UNKNOWN';
-  };
   const formatSummary = (summary: string | null) => {
     if (!summary) {
       return '';
@@ -129,28 +108,58 @@ function MainContent({
     const formatted = formatSummary(summary);
     return formatted.length > 0 ? formatted : '요약 내용이 제공되지 않았습니다.';
   };
-  const formatSentiment = (sentiment: string | null) => {
-    switch (normalizeSentiment(sentiment)) {
+  const formatImpact = (
+    impact: NonNullable<ArticleDetail['analysis']>['impact'] | null,
+  ) => {
+    switch (impact) {
       case 'NEGATIVE':
-        return '부정';
+        return '부정 영향';
       case 'POSITIVE':
-        return '긍정';
+        return '긍정 영향';
       case 'NEUTRAL':
         return '중립';
+      case 'MIXED':
+        return '혼합 영향';
       default:
-        return '분석 없음';
+        return '분석 준비 중';
     }
   };
-  const getSentimentBadgeClassName = (sentiment: string | null) => {
-    switch (normalizeSentiment(sentiment)) {
+  const getImpactBadgeClassName = (impact: string | null | undefined) => {
+    switch (impact) {
       case 'NEGATIVE':
         return 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-200';
       case 'POSITIVE':
         return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200';
       case 'NEUTRAL':
         return 'bg-slate-100 text-slate-700 dark:bg-slate-700/60 dark:text-slate-200';
+      case 'MIXED':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200';
       default:
         return 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+    }
+  };
+  const formatRelevance = (level: string | undefined) => {
+    switch (level) {
+      case 'DIRECT':
+        return '직접 관련';
+      case 'INDUSTRY':
+        return '산업 관련';
+      case 'IRRELEVANT':
+        return '관련 없음';
+      default:
+        return '관련도 분석 중';
+    }
+  };
+  const formatHorizon = (horizon: string | null | undefined) => {
+    switch (horizon) {
+      case 'SHORT':
+        return '단기';
+      case 'MEDIUM':
+        return '중기';
+      case 'LONG':
+        return '장기';
+      default:
+        return null;
     }
   };
   const containerClassName = `overflow-visible rounded-[18px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
@@ -221,11 +230,41 @@ function MainContent({
         </button>
       </div>
       <p className="mb-2 text-sm text-slate-600 dark:text-slate-300">뉴스 ID: {articleDetail.id}</p>
-      <span
-        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium md:font-semibold ${getSentimentBadgeClassName(articleDetail.sentiment)}`}
-      >
-        AI평가: {formatSentiment(articleDetail.sentiment)}
-      </span>
+      <div className="flex flex-wrap gap-2">
+        <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-200 md:font-semibold">
+          {formatRelevance(articleDetail.analysis?.relevanceLevel)}
+        </span>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium md:font-semibold ${getImpactBadgeClassName(articleDetail.analysis?.impact)}`}
+        >
+          카카오뱅크 영향: {formatImpact(articleDetail.analysis?.impact ?? null)}
+        </span>
+      </div>
+      {articleDetail.analysis ? (
+        <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">관련도 근거</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
+              {articleDetail.analysis.relevanceReason}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              영향 해석
+              {formatHorizon(articleDetail.analysis.impactHorizon)
+                ? ` · ${formatHorizon(articleDetail.analysis.impactHorizon)}`
+                : ''}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
+              {articleDetail.analysis.impactReason ?? '영향 근거를 분석하고 있습니다.'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          관련도와 카카오뱅크 영향 근거를 분석하고 있습니다.
+        </p>
+      )}
       {shareStatus !== 'idle' && (
         <p className="mt-2 text-xs text-blue-700 dark:text-blue-300" aria-live="polite">
           {shareStatus === 'shared' && '공유 창을 열었습니다.'}

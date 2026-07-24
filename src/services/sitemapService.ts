@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
-import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
-import { getDailyBriefing } from './articleServerApi';
+import { getAllReadyBriefings } from './briefingArchive';
+import { getPublishedTopics } from './topics';
 
 export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
 export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
@@ -9,8 +9,6 @@ export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
   60,
   86400,
 );
-const SITEMAP_BRIEFING_MAX_DAYS = readIntEnv('SITEMAP_BRIEFING_MAX_DAYS', 30, 0, 3650);
-
 export interface SitemapEntry {
   path: string;
   lastModified: string | null;
@@ -27,7 +25,21 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
       priority: '1.0',
     },
   ];
+  entries.push({
+    path: '/archive',
+    lastModified: new Date().toISOString(),
+    changeFrequency: 'daily',
+    priority: '0.9',
+  });
   entries.push(...(await getReadyBriefingSitemapEntries()));
+  entries.push(
+    ...(await getPublishedTopics()).map((topic) => ({
+      path: `/topics/${topic.slug}`,
+      lastModified: topic.briefings[0]?.date ?? null,
+      changeFrequency: 'daily' as const,
+      priority: '0.8',
+    })),
+  );
 
   return entries;
 };
@@ -46,29 +58,13 @@ export async function getSitemapChunkCount(): Promise<number> {
 }
 
 async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
-  if (SITEMAP_BRIEFING_MAX_DAYS <= 0) {
-    return [];
-  }
-
-  const entries: SitemapEntry[] = [];
-
-  for (let dayOffset = 1; dayOffset <= SITEMAP_BRIEFING_MAX_DAYS; dayOffset += 1) {
-    const targetDate = getKoreaIsoDateWithOffset(dayOffset);
-    const briefing = await getDailyBriefing(targetDate, { enqueue: false });
-
-    if (briefing.status !== 'READY') {
-      continue;
-    }
-
-    entries.push({
-      path: `/briefing/${targetDate}`,
-      lastModified: normalizeLastModified(briefing.generatedAt ?? targetDate),
+  const briefings = await getAllReadyBriefings();
+  return briefings.map((briefing) => ({
+      path: `/briefing/${briefing.date}`,
+      lastModified: normalizeLastModified(briefing.updatedAt ?? briefing.publishedAt ?? briefing.date),
       changeFrequency: 'daily',
       priority: '0.8',
-    });
-  }
-
-  return entries;
+    }));
 }
 
 function readIntEnv(name: string, fallback: number, min: number, max: number): number {

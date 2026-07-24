@@ -14,6 +14,9 @@ import {
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
+import { getBriefingArchive } from '../../../src/services/briefingArchive';
+import { getPublishedTopics } from '../../../src/services/topics';
+import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
 import type { IsoDate } from '../../../src/types/article';
 
 interface BriefingPageProps {
@@ -59,7 +62,7 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
         `${date} 브리핑 준비 중`,
         `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
       ),
-      robots: { index: false, follow: false },
+      robots: { index: false, follow: true },
     };
   }
 
@@ -82,20 +85,22 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   }
 
   const description = getMetaDescription(briefing.summary);
+  const topicTitle = briefing.keywords.slice(0, 3).join('·') || '주요 이슈';
+  const briefingTitle = `카카오뱅크 뉴스 브리핑 | ${topicTitle} | ${date}`;
 
   return {
-    title: `${date} 브리핑`,
+    title: briefingTitle,
     description,
     alternates: { canonical },
     robots: { index: true, follow: true },
     openGraph: {
       ...buildBriefingOpenGraph({
-        title: `${date} 브리핑`,
+        title: briefingTitle,
         description,
         canonical,
       }),
     },
-    twitter: buildTwitterMetadata(`${date} 브리핑`, description),
+    twitter: buildTwitterMetadata(briefingTitle, description),
   };
 }
 
@@ -106,7 +111,10 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
     notFound();
   }
 
-  const briefing = await getDailyBriefing(date);
+  const [briefing, issuePage] = await Promise.all([
+    getDailyBriefing(date),
+    getIssues(date, 'DIRECT'),
+  ]);
 
   if (briefing.status === 'PREPARING') {
     return <PreparingBriefingState date={date} />;
@@ -137,7 +145,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           actions={
             <>
               <Link
-                href="/"
+                href="/explore"
                 className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-slate-600"
               >
                 기사 탐색으로
@@ -154,6 +162,8 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           <DailyBriefingCard briefing={briefing} />
 
           <EditorialAnalysisSection briefing={briefing} />
+          <BriefingIssueSection clusters={issuePage.items} />
+          <RelatedTopics date={briefing.date} />
 
           <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
@@ -235,6 +245,73 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
   );
 }
 
+function BriefingIssueSection({ clusters }: { clusters: HomeIssueCluster[] }) {
+  if (clusters.length === 0) {
+    return null;
+  }
+  return (
+    <section className="mt-4 border-y border-slate-200 py-6 dark:border-slate-700">
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        KakaoBank Impact
+      </p>
+      <h2 className="mt-2 text-2xl font-[740] text-slate-950 dark:text-slate-50">
+        카카오뱅크 직접 영향
+      </h2>
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        {clusters.slice(0, 3).map((cluster) => (
+          <article
+            key={cluster.id}
+            className="rounded-[20px] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/[0.035]"
+          >
+            <p className="text-xs font-semibold text-[#0066cc] dark:text-[#2997ff]">
+              기사 {cluster.articleCount}건 · {cluster.sourceCount}개 매체
+            </p>
+            <h3 className="mt-2 text-lg font-[680] leading-7 text-slate-950 dark:text-white">
+              {cluster.title}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {cluster.impactReason}
+            </p>
+            {cluster.representativeArticleId && (
+              <Link
+                href={`/news/${cluster.representativeArticleId}`}
+                className="mt-4 inline-flex text-sm font-semibold text-[#0066cc] hover:underline dark:text-[#2997ff]"
+              >
+                근거 기사 보기
+              </Link>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function RelatedTopics({ date }: { date: string }) {
+  const topics = (await getPublishedTopics()).filter((topic) =>
+    topic.briefings.some((briefing) => briefing.date === date),
+  );
+  if (topics.length === 0) {
+    return null;
+  }
+  return (
+    <nav aria-label="관련 주제" className="mt-4 flex flex-wrap items-center gap-2">
+      <span className="mr-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        관련 주제
+      </span>
+      {topics.map((topic) => (
+        <Link
+          key={topic.slug}
+          href={`/topics/${topic.slug}`}
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff]"
+        >
+          {topic.title}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 function buildBriefingStructuredData({
   briefing,
   canonical,
@@ -244,47 +321,78 @@ function buildBriefingStructuredData({
   canonical: string;
   siteUrl: string;
 }) {
+  const featuredItemList = {
+    '@type': 'ItemList',
+    name: `${briefing.date} 대표 기사`,
+    itemListElement: briefing.featuredArticles.map((article, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Article',
+        headline: article.title,
+        url: article.link,
+        publisher: {
+          '@type': 'Organization',
+          name: article.sourceName,
+        },
+      },
+    })),
+  };
+
   return {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: `${formatKoreanDate(briefing.date)} 카카오뱅크 뉴스 브리핑`,
-    description: getMetaDescription(briefing.summary),
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': canonical,
-    },
-    datePublished: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
-    dateModified: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
-    image: `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`,
-    inLanguage: 'ko-KR',
-    author: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-    },
-    about: briefing.keywords.map((keyword) => ({
-      '@type': 'Thing',
-      name: keyword,
-    })),
-    mainEntity: {
-      '@type': 'ItemList',
-      itemListElement: briefing.featuredArticles.map((article, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        item: {
-          '@type': 'Article',
-          headline: article.title,
-          url: article.link,
-          publisher: {
-            '@type': 'Organization',
-            name: article.sourceName,
-          },
+    '@graph': [
+      {
+        '@type': 'Article',
+        headline: `${formatKoreanDate(briefing.date)} 카카오뱅크 뉴스 브리핑`,
+        description: getMetaDescription(briefing.summary),
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': canonical,
         },
-      })),
-    },
+        datePublished: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
+        dateModified: briefing.generatedAt ?? `${briefing.date}T23:59:59+09:00`,
+        image: `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`,
+        inLanguage: 'ko-KR',
+        author: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+        },
+        about: briefing.keywords.map((keyword) => ({
+          '@type': 'Thing',
+          name: keyword,
+        })),
+        mainEntity: featuredItemList,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: '홈',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: '브리핑 아카이브',
+            item: `${siteUrl}/archive`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: briefing.date,
+            item: canonical,
+          },
+        ],
+      },
+      featuredItemList,
+    ],
   };
 }
 
@@ -336,30 +444,40 @@ function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingRespons
   );
 }
 
-function BriefingDateNavigation({ date }: { date: string }) {
-  const previousDate = getPreviousIsoDateFrom(date);
-  const nextDate = getNextIsoDateFrom(date);
+async function BriefingDateNavigation({ date }: { date: string }) {
+  const archive = await getBriefingArchive(12);
+  const currentIndex = archive.findIndex((item) => item.date === date);
+  const previousDate = currentIndex >= 0 ? archive[currentIndex + 1]?.date : undefined;
+  const nextDate = currentIndex > 0 ? archive[currentIndex - 1]?.date : undefined;
 
   return (
     <nav
       aria-label="브리핑 날짜 이동"
       className="mb-4 flex items-center justify-between border-y border-slate-200 py-3 dark:border-slate-700"
     >
-      <Link
-        href={`/briefing/${previousDate}`}
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
-      >
-        <span aria-hidden="true">&larr;</span>
-        <span>이전 날짜</span>
-      </Link>
+      {previousDate ? (
+        <Link
+          href={`/briefing/${previousDate}`}
+          className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
+        >
+          <span aria-hidden="true">&larr;</span>
+          <span>이전 브리핑</span>
+        </Link>
+      ) : (
+        <span className="min-w-24" aria-hidden="true" />
+      )}
       <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{date}</span>
-      <Link
-        href={`/briefing/${nextDate}`}
-        className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
-      >
-        <span>다음 날짜</span>
-        <span aria-hidden="true">&rarr;</span>
-      </Link>
+      {nextDate ? (
+        <Link
+          href={`/briefing/${nextDate}`}
+          className="inline-flex min-h-10 items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-[#0066cc] dark:text-slate-200 dark:hover:text-[#2997ff]"
+        >
+          <span>다음 브리핑</span>
+          <span aria-hidden="true">&rarr;</span>
+        </Link>
+      ) : (
+        <span className="min-w-24" aria-hidden="true" />
+      )}
     </nav>
   );
 }
@@ -396,12 +514,13 @@ function buildTwitterMetadata(
   };
 }
 
-function PreparingBriefingState({
+async function PreparingBriefingState({
   date,
 }: {
   date: string;
 }) {
-  const previousDate = getPreviousIsoDateFrom(date);
+  const home = await getHomeData();
+  const latestReadyDate = home.latestReadyBriefing?.date ?? getPreviousIsoDateFrom(date);
 
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
@@ -415,7 +534,7 @@ function PreparingBriefingState({
           actions={
             <>
               <Link
-                href="/"
+                href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
               >
                 기사 탐색으로
@@ -445,7 +564,7 @@ function PreparingBriefingState({
               <StatusCard
                 label="상태"
                 value="준비 중"
-                description="오늘자 기사 데이터가 집계되고 있습니다."
+                description={`현재 ${home.collection.articleCount}건의 기사 데이터가 집계됐습니다.`}
               />
               <StatusCard
                 label="브리핑 공개"
@@ -461,13 +580,13 @@ function PreparingBriefingState({
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                href={`/briefing/${previousDate}`}
+                href={`/briefing/${latestReadyDate}`}
                 className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
               >
-                {previousDate} 브리핑 보기
+                {latestReadyDate} 최신 완료 브리핑
               </Link>
               <Link
-                href="/"
+                href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600"
               >
                 기사 탐색으로 돌아가기
@@ -496,7 +615,7 @@ function NotFoundBriefingState({
           actionCount={1}
           actions={
             <Link
-              href="/"
+              href="/explore"
               className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
             >
               기사 탐색으로
@@ -516,7 +635,7 @@ function NotFoundBriefingState({
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/"
+              href="/explore"
               className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
             >
               기사 탐색으로 이동

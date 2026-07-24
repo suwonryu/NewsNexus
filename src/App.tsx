@@ -599,10 +599,10 @@ function App({
     setIsDateSheetOpen(false);
 
     if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/') {
-        updateHistoryEntry('replace', '/', date);
+      if (window.location.pathname === '/explore') {
+        updateHistoryEntry('replace', '/explore', date);
       } else {
-        updateHistoryEntry('push', '/', date);
+        updateHistoryEntry('push', '/explore', date);
       }
     }
   };
@@ -628,8 +628,8 @@ function App({
       setPendingArticle(article);
       setArticleDetail(null);
       setIsDetailLoading(false);
-      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-        updateHistoryEntry('push', '/', selectedDate);
+      if (typeof window !== 'undefined' && window.location.pathname !== '/explore') {
+        updateHistoryEntry('push', '/explore', selectedDate);
       }
     } else {
       if (isMobile) {
@@ -656,8 +656,8 @@ function App({
   const handleShowArticleList = useCallback(() => {
     setMobileView('list');
 
-    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-      updateHistoryEntry('push', '/', selectedDate);
+    if (typeof window !== 'undefined' && window.location.pathname !== '/explore') {
+      updateHistoryEntry('push', '/explore', selectedDate);
     }
   }, [selectedDate]);
 

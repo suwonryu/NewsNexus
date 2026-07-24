@@ -1,36 +1,8 @@
-import type { CSSProperties } from 'react';
 import type { DailyBriefingResponse } from '../services/dailyBriefing';
 
 interface DailyBriefingCardProps {
   briefing: DailyBriefingResponse;
 }
-
-const SENTIMENT_SEGMENTS = [
-  {
-    key: 'POSITIVE',
-    label: '긍정',
-    countKey: 'positiveCount',
-    stroke: '#10b981',
-    dotClassName: 'bg-emerald-500',
-    textClassName: 'text-emerald-700 dark:text-emerald-300',
-  },
-  {
-    key: 'NEGATIVE',
-    label: '부정',
-    countKey: 'negativeCount',
-    stroke: '#f43f5e',
-    dotClassName: 'bg-rose-500',
-    textClassName: 'text-rose-700 dark:text-rose-300',
-  },
-  {
-    key: 'UNRELATED',
-    label: '관련 없음',
-    countKey: 'unrelatedCount',
-    stroke: '#64748b',
-    dotClassName: 'bg-slate-500',
-    textClassName: 'text-slate-700 dark:text-slate-300',
-  },
-] as const;
 
 function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
   if (briefing.status !== 'READY' || !briefing.summary) {
@@ -46,11 +18,6 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
       </section>
     );
   }
-
-  const sentimentTotal =
-    briefing.sentimentSummary.positiveCount +
-    briefing.sentimentSummary.negativeCount +
-    briefing.sentimentSummary.unrelatedCount;
 
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-[#d2d2d7] bg-white p-6 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)] lg:p-8">
@@ -83,10 +50,10 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                AI Evaluation
+                Analysis Scope
               </p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                AI 평가 분포
+                브리핑 분석 범위
               </h2>
             </div>
             <span className="rounded-full border border-blue-200/80 bg-blue-50/80 px-3 py-1 text-xs font-medium text-blue-800 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200">
@@ -94,37 +61,14 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
             </span>
           </div>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[180px_minmax(0,1fr)] 2xl:items-center">
-            <SentimentDonutChart total={sentimentTotal} briefing={briefing} />
-
-            <div className="space-y-3">
-              {SENTIMENT_SEGMENTS.map((segment) => {
-                const count = briefing.sentimentSummary[segment.countKey];
-                const ratio = sentimentTotal > 0 ? Math.round((count / sentimentTotal) * 100) : 0;
-                const itemStyle = {
-                  '--briefing-delay': `${180 + SENTIMENT_SEGMENTS.findIndex(({ key }) => key === segment.key) * 90}ms`,
-                } as CSSProperties;
-
-                return (
-                  <div
-                    key={segment.key}
-                    className="briefing-fade-in-up flex items-center justify-between rounded-2xl border border-white/70 bg-white/58 px-4 py-3 dark:border-slate-700/55 dark:bg-slate-950/34"
-                    style={itemStyle}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className={`h-2.5 w-2.5 rounded-full ${segment.dotClassName}`} />
-                      <span className={`text-sm font-medium ${segment.textClassName}`}>{segment.label}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="briefing-fade-in-up text-lg font-[720] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                        {count}건
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{ratio}%</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <dl className="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+            <AnalysisCount label="수집 기사" value={briefing.articleCount} />
+            <AnalysisCount label="수집 출처" value={briefing.sourceCount} suffix="개" />
+            <AnalysisCount label="대표 기사" value={briefing.featuredArticles.length} />
+          </dl>
+          <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm leading-6 text-blue-950 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-100">
+            긍정·부정 비율 대신, 아래 편집 분석과 이슈별 카드에서 카카오뱅크에 미치는
+            영향과 근거를 함께 제공합니다.
           </div>
         </section>
       </div>
@@ -132,91 +76,21 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
   );
 }
 
-function SentimentDonutChart({
-  briefing,
-  total,
+function AnalysisCount({
+  label,
+  value,
+  suffix = '건',
 }: {
-  briefing: DailyBriefingResponse;
-  total: number;
+  label: string;
+  value: number;
+  suffix?: string;
 }) {
-  const radius = 48;
-  const strokeWidth = 14;
-  const circumference = 2 * Math.PI * radius;
-  let accumulatedLength = 0;
-
   return (
-    <div
-      className="briefing-fade-in-up mx-auto flex w-full max-w-[220px] flex-col items-center"
-      style={{ '--briefing-delay': '80ms' } as CSSProperties}
-    >
-      <div className="relative h-[140px] w-[140px]">
-        <svg
-          viewBox="0 0 140 140"
-          className="briefing-donut h-full w-full -rotate-90"
-          aria-hidden="true"
-        >
-          <circle
-            cx="70"
-            cy="70"
-            r={radius}
-            fill="none"
-            stroke="rgba(148,163,184,0.22)"
-            strokeWidth={strokeWidth}
-          />
-          {SENTIMENT_SEGMENTS.map((segment) => {
-            const count = briefing.sentimentSummary[segment.countKey];
-
-            if (count === 0 || total === 0) {
-              return null;
-            }
-
-            const segmentLength = (count / total) * circumference;
-            const dashOffset = -accumulatedLength;
-            accumulatedLength += segmentLength;
-
-            return (
-              <circle
-                key={segment.key}
-                cx="70"
-                cy="70"
-                r={radius}
-                fill="none"
-                stroke={segment.stroke}
-                strokeWidth={strokeWidth}
-                className="briefing-donut-segment"
-                style={
-                  {
-                    '--segment-length': segmentLength,
-                    '--segment-gap': circumference - segmentLength,
-                    '--segment-offset': dashOffset,
-                    '--segment-circumference': circumference,
-                    '--segment-delay': `${160 + SENTIMENT_SEGMENTS.findIndex(({ key }) => key === segment.key) * 90}ms`,
-                  } as CSSProperties
-                }
-              />
-            );
-          })}
-        </svg>
-
-        <div
-          className="briefing-fade-in-up absolute inset-0 flex flex-col items-center justify-center text-center"
-          style={{ '--briefing-delay': '220ms' } as CSSProperties}
-        >
-          <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            AI 평가
-          </span>
-          <span className="mt-1 text-3xl font-[760] tracking-[-0.05em] text-slate-950 dark:text-slate-50">
-            {total}
-          </span>
-          <span className="text-sm text-slate-600 dark:text-slate-300">건</span>
-        </div>
-      </div>
-
-      <p className="mt-3 text-center text-xs leading-5 text-slate-500 dark:text-slate-400">
-        {total > 0
-          ? '전체 기사 기준 AI 평가 분포'
-          : '집계된 AI 평가 데이터가 아직 없습니다.'}
-      </p>
+    <div className="rounded-2xl border border-white/70 bg-white/60 px-4 py-4 dark:border-slate-700/55 dark:bg-slate-950/34">
+      <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
+      <dd className="mt-1 text-2xl font-[730] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
+        {value}{suffix}
+      </dd>
     </div>
   );
 }

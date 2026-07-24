@@ -1,4 +1,9 @@
-import type { ArticleDetail, ArticleListResponse, IsoDate } from '../types/article';
+import type {
+  ArticleDetail,
+  ArticleImpactAnalysis,
+  ArticleListResponse,
+  IsoDate,
+} from '../types/article';
 import { getKoreaIsoDate, getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getMockArticleDetail, getMockArticlesByDate, getMockDateTree } from './mockArticleData';
 import type {
@@ -13,6 +18,7 @@ import type { DateTreeResponse } from '../types/article';
 const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
 const KABANG_ARTICLE_API_BASE = `${KABANG_API_ROOT}/new`;
 const KABANG_BRIEFING_API_BASE = `${KABANG_API_ROOT}/briefings`;
+const KABANG_ANALYSIS_API_BASE = `${KABANG_API_ROOT}/analysis/articles`;
 const REVALIDATE_SECONDS = 300;
 
 interface KabangListItem {
@@ -59,10 +65,13 @@ async function getJson<T>(
 
 export async function getArticleDetail(id: number): Promise<ArticleDetail | null> {
   try {
-    const response = await getJson<KabangDetailResponse>(`${KABANG_ARTICLE_API_BASE}/${id}`, {
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
-    return mapKabangDetailResponse(response);
+    const [response, analysis] = await Promise.all([
+      getJson<KabangDetailResponse>(`${KABANG_ARTICLE_API_BASE}/${id}`, {
+        next: { revalidate: REVALIDATE_SECONDS },
+      }),
+      getOptionalArticleAnalysis(id),
+    ]);
+    return mapKabangDetailResponse(response, analysis);
   } catch {
     return getMockArticleDetail(id);
   }
@@ -208,7 +217,20 @@ function mapKabangListResponse(response: KabangListResponse): ArticleListRespons
   };
 }
 
-function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail {
+async function getOptionalArticleAnalysis(id: number): Promise<ArticleImpactAnalysis | null> {
+  try {
+    return await getJson<ArticleImpactAnalysis>(`${KABANG_ANALYSIS_API_BASE}/${id}`, {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+  } catch {
+    return null;
+  }
+}
+
+function mapKabangDetailResponse(
+  response: KabangDetailResponse,
+  analysis: ArticleImpactAnalysis | null = null,
+): ArticleDetail {
   return {
     id: response.id,
     title: response.title,
@@ -217,6 +239,7 @@ function mapKabangDetailResponse(response: KabangDetailResponse): ArticleDetail 
     cursor: response.cursor ?? null,
     summary: response.summary,
     sentiment: response.sentiment,
+    analysis,
     publishedDate: response.publishedDate
       ? formatDateForDisplay(response.publishedDate)
       : response.date
