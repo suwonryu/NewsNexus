@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import type { ArticleListItem } from '../../types/article';
 import type { BankImpact, HomeData, HomeIssueCluster } from '../../services/home';
-import { SITE_NAME } from '../../lib/siteMetadata';
-import { ThemeToggle } from '../ThemeToggle';
+import { SiteHeader } from '../SiteHeader';
 
 interface NewsHomeProps {
   home: HomeData;
@@ -31,31 +30,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <header className="flex items-center justify-between gap-4 py-2">
-          <Link href="/" className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0071e3] dark:text-[#2997ff]">
-              KakaoBank News Analysis
-            </p>
-            <p className="mt-1 truncate text-lg font-[700] tracking-[-0.03em] text-slate-950 dark:text-white">
-              {SITE_NAME}
-            </p>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/archive"
-              className="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex"
-            >
-              브리핑 아카이브
-            </Link>
-            <Link
-              href="/explore"
-              className="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex"
-            >
-              기사 탐색
-            </Link>
-            <ThemeToggle compact />
-          </div>
-        </header>
+        <SiteHeader active="today" />
 
         <section className="mt-8 overflow-hidden rounded-[30px] border border-white/70 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.1)] backdrop-blur dark:border-white/10 dark:bg-[#18181a]/90 dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
           <div className="grid gap-0 lg:grid-cols-[1.5fr_0.5fr]">
@@ -223,10 +198,10 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
               </h2>
             </div>
             <Link
-              href="/explore"
+              href="/explore?view=articles"
               className="text-sm font-semibold text-[#0066cc] hover:underline dark:text-[#2997ff]"
             >
-              전체 기사 탐색
+              기사별 보기
             </Link>
           </div>
           <ul className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-[24px] border border-slate-200 bg-white/85 shadow-[0_16px_48px_rgba(15,23,42,0.06)] dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.035]">

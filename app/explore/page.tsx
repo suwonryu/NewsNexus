@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import App from '../../src/App';
-import { ThemeToggle } from '../../src/components/ThemeToggle';
+import { SiteHeader } from '../../src/components/SiteHeader';
 import { getKoreaIsoDate } from '../../src/lib/koreaDate';
 import { getArticlesByDate, getDateTree } from '../../src/services/articleServerApi';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../src/services/home';
@@ -51,26 +51,13 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   ]);
 
   return (
-    <>
-      <nav className="flex items-center justify-center gap-2 px-4 pt-4" aria-label="탐색 보기">
-        <Link
-          href={`/explore?date=${selectedDate}`}
-          className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200"
-        >
-          이슈별
-        </Link>
-        <span className="rounded-full bg-[#0071e3] px-4 py-2 text-sm font-semibold text-white dark:bg-[#2997ff] dark:text-black">
-          기사별
-        </span>
-      </nav>
-      <App
-        initialSelectedDate={selectedDate}
-        initialDateTree={dateTree.years}
-        initialArticles={response.items}
-        initialNextCursor={response.nextCursor}
-        initialHasMore={response.hasNext}
-      />
-    </>
+    <App
+      initialSelectedDate={selectedDate}
+      initialDateTree={dateTree.years}
+      initialArticles={response.items}
+      initialNextCursor={response.nextCursor}
+      initialHasMore={response.hasNext}
+    />
   );
 }
 
@@ -86,19 +73,15 @@ function IssueExplorer({
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <header className="flex items-center justify-between gap-4">
-          <Link href="/" className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0071e3] dark:text-[#2997ff]">
-              Article Explorer
-            </p>
-            <h1 className="mt-1 text-2xl font-[740] tracking-[-0.035em] text-slate-950 dark:text-white">
-              이슈별 기사 탐색
-            </h1>
-          </Link>
-          <ThemeToggle compact />
-        </header>
+        <SiteHeader active="explore" />
 
         <section className="mt-8 rounded-[26px] border border-slate-200 bg-white/85 p-5 shadow-[0_16px_48px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/[0.035]">
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">탐색</p>
+            <h1 className="mt-2 text-3xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-white">
+              이슈별 보기
+            </h1>
+          </div>
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <form method="get" className="flex flex-wrap items-end gap-3">
               <input type="hidden" name="relevance" value={relevance} />

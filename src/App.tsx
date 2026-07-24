@@ -5,8 +5,7 @@ import Link from 'next/link';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
-import { ThemeToggle } from './components/ThemeToggle';
-import { SITE_NAME } from './lib/siteMetadata';
+import { SiteHeader } from './components/SiteHeader';
 import {
   fetchArticleDetail,
   fetchArticlesByDate,
@@ -599,10 +598,11 @@ function App({
     setIsDateSheetOpen(false);
 
     if (typeof window !== 'undefined') {
+      const articleExplorerPath = `/explore?view=articles&date=${date}`;
       if (window.location.pathname === '/explore') {
-        updateHistoryEntry('replace', '/explore', date);
+        updateHistoryEntry('replace', articleExplorerPath, date);
       } else {
-        updateHistoryEntry('push', '/explore', date);
+        updateHistoryEntry('push', articleExplorerPath, date);
       }
     }
   };
@@ -629,7 +629,11 @@ function App({
       setArticleDetail(null);
       setIsDetailLoading(false);
       if (typeof window !== 'undefined' && window.location.pathname !== '/explore') {
-        updateHistoryEntry('push', '/explore', selectedDate);
+        updateHistoryEntry(
+          'push',
+          `/explore?view=articles&date=${selectedDate}`,
+          selectedDate,
+        );
       }
     } else {
       if (isMobile) {
@@ -657,7 +661,11 @@ function App({
     setMobileView('list');
 
     if (typeof window !== 'undefined' && window.location.pathname !== '/explore') {
-      updateHistoryEntry('push', '/explore', selectedDate);
+      updateHistoryEntry(
+        'push',
+        `/explore?view=articles&date=${selectedDate ?? getTodayIsoDate()}`,
+        selectedDate,
+      );
     }
   }, [selectedDate]);
 
@@ -702,40 +710,60 @@ function App({
 
   return (
     <div className="mobile-app-shell md:min-h-screen md:p-6">
-      <div className="mobile-app-shell-body md:hidden flex min-h-0 flex-col gap-3">
-        <header className="rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                {SITE_NAME}
-              </p>
-              <h1 className="mt-2 text-lg font-[650] text-slate-900 dark:text-slate-50">
-                {mobileView === 'list' ? '기사 목록' : '기사 보기'}
-              </h1>
-            </div>
-            <ThemeToggle compact />
+      <SiteHeader active="explore" />
+
+      <section className="my-3 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-[#0071e3] dark:text-[#2997ff]">탐색</p>
+            <h1 className="mt-1 text-lg font-[680] text-slate-950 dark:text-white md:text-xl">
+              {selectedArticleId !== null || pendingArticle
+                ? '기사 상세'
+                : '기사별 보기'}
+            </h1>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <nav className="flex gap-2" aria-label="탐색 보기">
+            <Link
+              href={`/explore?date=${selectedDate ?? getTodayIsoDate()}`}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-white/15 dark:bg-white/5 dark:text-slate-200"
+            >
+              이슈별
+            </Link>
+            <span
+              aria-current="page"
+              className="rounded-full bg-[#0071e3] px-4 py-2 text-sm font-semibold text-white dark:bg-[#2997ff] dark:text-black"
+            >
+              기사별
+            </span>
+          </nav>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-white/10">
+          <div className="flex flex-wrap items-center gap-2">
             {selectedDate && (
               <Link
                 href={getBriefingHref(selectedDate)}
-                className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-3 py-1 text-xs font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black dark:hover:border-[#2997ff]"
+                className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-3 py-1.5 text-xs font-semibold text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
               >
                 {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
               </Link>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setIsDateSheetOpen(true);
-              }}
-              className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff]"
-            >
-              {selectedDate ?? '날짜 선택'}
-            </button>
+            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 md:inline">
+              {selectedDate}
+            </span>
           </div>
-        </header>
+          <button
+            type="button"
+            onClick={() => {
+              setIsDateSheetOpen(true);
+            }}
+            className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff] md:hidden"
+          >
+            {selectedDate ?? '날짜 선택'}
+          </button>
+        </div>
+      </section>
 
+      <div className="mobile-app-shell-body !min-h-[calc(100svh-15rem)] md:hidden flex min-h-0 flex-col gap-3">
         {mobileView === 'list' ? (
           <div className="transition-all duration-300 ease-out">
             <SubMenu
@@ -768,32 +796,7 @@ function App({
         )}
       </div>
 
-      <div className="mb-3 hidden items-center justify-between md:flex">
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            카카오뱅크 뉴스 요약
-          </p>
-          <h1 className="mt-1 text-2xl font-[700] tracking-[-0.03em] text-slate-950 dark:text-slate-50">
-            {SITE_NAME}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">기사 탐색</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {selectedDate && (
-            <Link
-              href={getBriefingHref(selectedDate)}
-              className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(0,113,227,0.16)] transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black dark:shadow-[0_10px_28px_rgba(41,151,255,0.18)]"
-            >
-              {isCurrentIsoDate(selectedDate)
-                ? `${selectedDate} 브리핑 준비 중`
-                : `${selectedDate} 브리핑 보기`}
-            </Link>
-          )}
-          <ThemeToggle />
-        </div>
-      </div>
-
-      <div className="hidden md:grid h-[calc(100vh-7rem)] grid-cols-[260px_360px_1fr] gap-3">
+      <div className="hidden min-h-[34rem] md:grid md:h-[calc(100vh-16rem)] md:grid-cols-[260px_360px_1fr] md:gap-3">
         <MainMenu
           dateTree={dateTree}
           selectedDate={selectedDate}

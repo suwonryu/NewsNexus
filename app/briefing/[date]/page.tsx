@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
-import { ThemeToggle } from '../../../src/components/ThemeToggle';
+import { SiteHeader } from '../../../src/components/SiteHeader';
 import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
 import {
   DEFAULT_OG_IMAGE,
@@ -136,19 +136,19 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
       />
       <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
         <div className="mx-auto max-w-[1320px]">
+          <SiteHeader active="briefings" className="mb-4" />
           <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
           mobileTitle="데일리 브리핑"
-          actionCount={2}
           actions={
             <>
               <Link
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-slate-600"
               >
-                기사 탐색으로
+                이슈 탐색으로
               </Link>
               <span className="inline-flex items-center rounded-full border border-[#0071e3] bg-blue-50 px-4 py-2 text-sm font-medium text-[#0066cc] dark:border-[#2997ff]/60 dark:bg-blue-500/10 dark:text-[#2997ff]">
                 {date}
@@ -525,19 +525,19 @@ async function PreparingBriefingState({
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
       <div className="mx-auto max-w-[1120px]">
+        <SiteHeader active="briefings" className="mb-4" />
         <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
           mobileTitle="브리핑 준비 중"
-          actionCount={2}
           actions={
             <>
               <Link
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
               >
-                기사 탐색으로
+                이슈 탐색으로
               </Link>
               <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
                 집계 중
@@ -589,7 +589,7 @@ async function PreparingBriefingState({
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600"
               >
-                기사 탐색으로 돌아가기
+                이슈 탐색으로 돌아가기
               </Link>
             </div>
           </div>
@@ -607,18 +607,18 @@ function NotFoundBriefingState({
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
       <div className="mx-auto max-w-[1120px]">
+        <SiteHeader active="briefings" className="mb-4" />
         <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
           mobileTitle="브리핑 없음"
-          actionCount={1}
           actions={
             <Link
               href="/explore"
               className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
             >
-              기사 탐색으로
+              이슈 탐색으로
             </Link>
           }
         />
@@ -638,7 +638,7 @@ function NotFoundBriefingState({
               href="/explore"
               className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
             >
-              기사 탐색으로 이동
+              이슈 탐색으로 이동
             </Link>
           </div>
         </section>
@@ -672,46 +672,30 @@ function BriefingHeader({
   desktopTitle,
   mobileTitle,
   actions,
-  actionCount,
 }: {
   desktopEyebrow: string;
   mobileEyebrow: string;
   desktopTitle: string;
   mobileTitle: string;
   actions: ReactNode;
-  actionCount: number;
 }) {
   return (
     <header className="mb-4 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-5 py-4 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] md:rounded-[28px]">
-      <div className="md:flex md:items-center md:justify-between md:gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs tracking-[0.14em] text-slate-500 dark:text-slate-400 md:uppercase md:tracking-[0.18em]">
-              <span className="md:hidden">{mobileEyebrow}</span>
-              <span className="hidden md:inline">{desktopEyebrow}</span>
-            </p>
-            <h1 className="mt-2 text-lg font-[650] tracking-[-0.03em] text-slate-950 dark:text-slate-50 md:text-2xl md:font-[760] md:tracking-[-0.04em]">
-              <span className="md:hidden">{mobileTitle}</span>
-              <span className="hidden md:inline">{desktopTitle}</span>
-            </h1>
-          </div>
-          <div className="md:hidden">
-            <ThemeToggle compact />
-          </div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+        <div className="min-w-0">
+          <p className="text-xs tracking-[0.14em] text-slate-500 dark:text-slate-400 md:uppercase md:tracking-[0.18em]">
+            <span className="md:hidden">{mobileEyebrow}</span>
+            <span className="hidden md:inline">{desktopEyebrow}</span>
+          </p>
+          <h1 className="mt-2 text-lg font-[650] tracking-[-0.03em] text-slate-950 dark:text-slate-50 md:text-2xl md:font-[760] md:tracking-[-0.04em]">
+            <span className="md:hidden">{mobileTitle}</span>
+            <span className="hidden md:inline">{desktopTitle}</span>
+          </h1>
         </div>
 
-        <div className="mt-3 hidden flex-wrap items-center gap-2 md:mt-0 md:flex md:justify-end">
-          <ThemeToggle compact />
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           {actions}
         </div>
-      </div>
-
-      <div
-        className={`mt-3 flex flex-wrap items-center gap-2 md:hidden ${
-          actionCount > 1 ? 'justify-between' : 'justify-start'
-        }`}
-      >
-        {actions}
       </div>
     </header>
   );

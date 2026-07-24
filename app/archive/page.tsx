@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ThemeToggle } from '../../src/components/ThemeToggle';
-import { SITE_NAME } from '../../src/lib/siteMetadata';
+import { SiteHeader } from '../../src/components/SiteHeader';
 import {
   getBriefingArchive,
   type BriefingArchiveItem,
@@ -22,17 +21,7 @@ export default async function ArchivePage() {
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <header className="flex items-center justify-between gap-4 py-2">
-          <Link href="/" className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0071e3] dark:text-[#2997ff]">
-              Briefing Archive
-            </p>
-            <p className="mt-1 truncate text-lg font-[700] tracking-[-0.03em] text-slate-950 dark:text-white">
-              {SITE_NAME}
-            </p>
-          </Link>
-          <ThemeToggle compact />
-        </header>
+        <SiteHeader active="briefings" />
 
         <section className="mt-12">
           <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">날짜별 브리핑</p>
