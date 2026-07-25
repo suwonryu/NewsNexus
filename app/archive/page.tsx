@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: '카카오뱅크 뉴스 브리핑 아카이브',
-    description: '품질 기준을 통과한 날짜별 카카오뱅크 뉴스 브리핑을 모아봅니다.',
+    description: '생성이 완료된 날짜별 카카오뱅크 뉴스 브리핑을 모아봅니다.',
     url: '/archive',
     siteName: SITE_NAME,
     locale: 'ko_KR',
@@ -73,8 +73,8 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
             브리핑 아카이브
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-            품질 기준을 통과한 완료 브리핑만 날짜순으로 제공합니다. 각 날짜의 핵심 주제와
-            카카오뱅크 영향을 이어서 확인할 수 있습니다.
+            생성이 완료된 브리핑을 날짜순으로 제공합니다. 검색 품질 기준은 별도로 적용해
+            각 날짜의 핵심 주제와 카카오뱅크 영향을 이어서 확인할 수 있습니다.
           </p>
         </section>
 

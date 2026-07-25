@@ -1,12 +1,10 @@
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getDailyBriefing } from './articleServerApi';
-import {
-  evaluateBriefingQuality,
-  normalizeEditorialText,
-} from './contentQuality';
+import { normalizeEditorialText } from './contentQuality';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
+const MIN_PRIMARY_ARCHIVE_ITEMS = 20;
 
 export interface BriefingArchiveItem {
   date: string;
@@ -44,11 +42,12 @@ export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchi
     const items = responses
       .flat()
       .map(normalizeItem)
-      .filter(isArchiveItem)
-      .filter(passesArchiveQualityGate);
-    if (items.length > 0) {
-      return sortItems(await filterArchiveByDetailedQuality(items));
+      .filter(isArchiveItem);
+    if (items.length >= MIN_PRIMARY_ARCHIVE_ITEMS) {
+      return sortItems(items);
     }
+    const compatibilityItems = await buildCompatibilityArchive();
+    return sortItems(mergeByDate(items, compatibilityItems));
   } catch {
     // The compatibility path below keeps the archive usable during backend rollout.
   }
@@ -67,8 +66,7 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
     }
     const items = ((await response.json()) as BriefingArchiveItem[])
       .map(normalizeItem)
-      .filter(isArchiveItem)
-      .filter(passesArchiveQualityGate);
+      .filter(isArchiveItem);
     if (items.length > 0) {
       return sortItems(items);
     }
@@ -79,41 +77,42 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
 }
 
 async function buildCompatibilityArchive(): Promise<BriefingArchiveItem[]> {
-  const items: BriefingArchiveItem[] = [];
-  for (let dayOffset = 1; dayOffset <= 30; dayOffset += 1) {
-    const date = getKoreaIsoDateWithOffset(dayOffset);
-    const briefing = await getDailyBriefing(date, { enqueue: false });
-    if (briefing.status !== 'READY' || !briefing.summary) {
-      continue;
-    }
-    const item: BriefingArchiveItem = {
-      date,
-      headline:
-        briefing.editorialAnalysis?.keyChanges?.[0] ||
-        briefing.keywords.slice(0, 3).join(' · ') ||
-        `${date} 카카오뱅크 뉴스 브리핑`,
-      summary: normalizeEditorialText(briefing.summary, 3),
-      topicTags: briefing.keywords.slice(0, 3),
-      publishedAt: briefing.generatedAt,
-      updatedAt: briefing.generatedAt,
-      qualityScore: briefing.qualityScore,
-      relevantArticleRatio:
-        briefing.relevantArticleRatio ??
-        (briefing.articleCount > 0
-          ? (briefing.articleCount - briefing.sentimentSummary.unrelatedCount) /
-            briefing.articleCount
-          : 0),
-      representativeArticleCount:
-        briefing.representativeArticleCount ?? briefing.featuredArticles.length,
-      uniqueSourceCount:
-        briefing.uniqueSourceCount ??
-        new Set(briefing.featuredArticles.map((article) => article.sourceName)).size,
-    };
-    if (passesArchiveQualityGate(item)) {
-      items.push(item);
-    }
-  }
-  return sortItems(items);
+  const dayOffsets = Array.from({ length: 30 }, (_, index) => index + 1);
+  const items = await mapWithConcurrency<number, BriefingArchiveItem | null>(
+    dayOffsets,
+    6,
+    async (dayOffset) => {
+      const date = getKoreaIsoDateWithOffset(dayOffset);
+      const briefing = await getDailyBriefing(date, { enqueue: false });
+      if (briefing.status !== 'READY' || !briefing.summary) {
+        return null;
+      }
+      return {
+        date,
+        headline:
+          briefing.editorialAnalysis?.keyChanges?.[0] ||
+          briefing.keywords.slice(0, 3).join(' · ') ||
+          `${date} 카카오뱅크 뉴스 브리핑`,
+        summary: normalizeEditorialText(briefing.summary, 3),
+        topicTags: briefing.keywords.slice(0, 3),
+        publishedAt: briefing.generatedAt,
+        updatedAt: briefing.generatedAt,
+        qualityScore: briefing.qualityScore,
+        relevantArticleRatio:
+          briefing.relevantArticleRatio ??
+          (briefing.articleCount > 0
+            ? (briefing.articleCount - briefing.sentimentSummary.unrelatedCount) /
+              briefing.articleCount
+            : 0),
+        representativeArticleCount:
+          briefing.representativeArticleCount ?? briefing.featuredArticles.length,
+        uniqueSourceCount:
+          briefing.uniqueSourceCount ??
+          new Set(briefing.featuredArticles.map((article) => article.sourceName)).size,
+      } satisfies BriefingArchiveItem;
+    },
+  );
+  return sortItems(items.filter(isArchiveItem));
 }
 
 function normalizeItem(value: Partial<BriefingArchiveItem>): BriefingArchiveItem | null {
@@ -148,51 +147,36 @@ function sortItems(items: BriefingArchiveItem[]) {
   return [...items].sort((left, right) => right.date.localeCompare(left.date));
 }
 
-export function passesArchiveQualityGate(item: BriefingArchiveItem): boolean {
-  return evaluateBriefingQuality({
-    headline: item.headline,
-    summary: item.summary,
-    qualityScore: item.qualityScore,
-    relevantArticleRatio: item.relevantArticleRatio,
-    representativeArticleCount: item.representativeArticleCount,
-    uniqueSourceCount: item.uniqueSourceCount,
-  }).passes;
+function mergeByDate(
+  primary: BriefingArchiveItem[],
+  compatibility: BriefingArchiveItem[],
+): BriefingArchiveItem[] {
+  const items = new Map<string, BriefingArchiveItem>();
+  for (const item of compatibility) {
+    items.set(item.date, item);
+  }
+  for (const item of primary) {
+    items.set(item.date, item);
+  }
+  return [...items.values()];
 }
 
-async function filterArchiveByDetailedQuality(
-  items: BriefingArchiveItem[],
-): Promise<BriefingArchiveItem[]> {
-  const results = new Array<BriefingArchiveItem | null>(items.length);
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
   let cursor = 0;
-  const workers = Array.from({ length: Math.min(8, items.length) }, async () => {
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (cursor < items.length) {
       const index = cursor;
       cursor += 1;
-      const item = items[index];
-      const briefing = await getDailyBriefing(item.date, { enqueue: false });
-      if (briefing.status !== 'READY' || !briefing.summary) {
-        results[index] = null;
-        continue;
-      }
-      const uniqueSourceCount =
-        briefing.uniqueSourceCount ??
-        new Set(briefing.featuredArticles.map((article) => article.sourceName)).size;
-      const quality = evaluateBriefingQuality({
-        headline: item.headline,
-        summary: briefing.summary,
-        articleCount: briefing.articleCount,
-        unrelatedArticleCount: briefing.sentimentSummary.unrelatedCount,
-        relevantArticleRatio: briefing.relevantArticleRatio,
-        representativeArticleCount:
-          briefing.representativeArticleCount ?? briefing.featuredArticles.length,
-        uniqueSourceCount,
-        qualityScore: briefing.qualityScore,
-      });
-      results[index] = quality.passes ? item : null;
+      results[index] = await mapper(items[index]);
     }
   });
   await Promise.all(workers);
-  return results.filter(isArchiveItem);
+  return results;
 }
 
 function recentMonths(count: number): Array<{ year: number; month: number }> {
