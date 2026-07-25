@@ -15,6 +15,10 @@ import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
 import { getBriefingArchive } from '../../../src/services/briefingArchive';
+import {
+  evaluateBriefingQuality,
+  normalizeEditorialText,
+} from '../../../src/services/contentQuality';
 import { getPublishedTopics } from '../../../src/services/topics';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
 import type { IsoDate } from '../../../src/types/article';
@@ -87,12 +91,13 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   const description = getMetaDescription(briefing.summary);
   const topicTitle = briefing.keywords.slice(0, 3).join('·') || '주요 이슈';
   const briefingTitle = `카카오뱅크 뉴스 브리핑 | ${topicTitle} | ${date}`;
+  const quality = getBriefingQuality(briefing);
 
   return {
     title: briefingTitle,
     description,
     alternates: { canonical },
-    robots: { index: true, follow: true },
+    robots: { index: quality.passes, follow: true },
     openGraph: {
       ...buildBriefingOpenGraph({
         title: briefingTitle,
@@ -140,8 +145,8 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
-          desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
-          mobileTitle="데일리 브리핑"
+          desktopTitle={`${formatKoreanDate(date)} | ${getBriefingDisplayHeadline(briefing)}`}
+          mobileTitle={getBriefingDisplayHeadline(briefing)}
           actions={
             <>
               <Link
@@ -344,7 +349,7 @@ function buildBriefingStructuredData({
     '@graph': [
       {
         '@type': 'Article',
-        headline: `${formatKoreanDate(briefing.date)} 카카오뱅크 뉴스 브리핑`,
+        headline: `${formatKoreanDate(briefing.date)} | ${getBriefingDisplayHeadline(briefing)}`,
         description: getMetaDescription(briefing.summary),
         mainEntityOfPage: {
           '@type': 'WebPage',
@@ -770,11 +775,37 @@ function getMetaDescription(summary: string | null): string {
     return '카카오뱅크 뉴스 브리핑';
   }
 
-  const normalized = summary.replace(/\s+/g, ' ').trim();
+  const normalized = normalizeEditorialText(summary, 3);
 
   if (!normalized) {
     return '카카오뱅크 뉴스 브리핑';
   }
 
   return normalized.slice(0, 160);
+}
+
+function getBriefingDisplayHeadline(briefing: DailyBriefingResponse): string {
+  const leadingChange = briefing.editorialAnalysis?.keyChanges?.[0];
+  if (leadingChange) {
+    return normalizeEditorialText(leadingChange, 1).replace(/[.!?]$/, '');
+  }
+  const topics = briefing.keywords.slice(0, 3).join('·');
+  return topics ? `${topics} 흐름과 카카오뱅크 영향` : '주요 이슈와 카카오뱅크 영향';
+}
+
+function getBriefingQuality(briefing: DailyBriefingResponse) {
+  const uniqueSourceCount =
+    briefing.uniqueSourceCount ??
+    new Set(briefing.featuredArticles.map((article) => article.sourceName)).size;
+  return evaluateBriefingQuality({
+    headline: getBriefingDisplayHeadline(briefing),
+    summary: briefing.summary ?? '',
+    articleCount: briefing.articleCount,
+    unrelatedArticleCount: briefing.sentimentSummary.unrelatedCount,
+    relevantArticleRatio: briefing.relevantArticleRatio,
+    representativeArticleCount:
+      briefing.representativeArticleCount ?? briefing.featuredArticles.length,
+    uniqueSourceCount,
+    qualityScore: briefing.qualityScore,
+  });
 }

@@ -1,4 +1,5 @@
 import type { DailyBriefingResponse } from '../services/dailyBriefing';
+import { normalizeEditorialText } from '../services/contentQuality';
 
 interface DailyBriefingCardProps {
   briefing: DailyBriefingResponse;
@@ -9,9 +10,9 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
     return (
       <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
         <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Daily Briefing</p>
-        <h1 className="mt-3 text-3xl font-[760] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
+        <h2 className="mt-3 text-3xl font-[760] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
           {briefing.date} 브리핑
-        </h1>
+        </h2>
         <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
           아직 브리핑을 구성할 수 있는 기사 데이터가 없습니다.
         </p>
@@ -27,11 +28,11 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
           <p className="text-[11px] uppercase tracking-[0.24em] text-blue-800/80 dark:text-blue-200/80">
             Daily Briefing
           </p>
-          <h1 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
-            {briefing.date} 브리핑
-          </h1>
-          <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-8 text-slate-700 dark:text-slate-200">
-            {briefing.summary}
+          <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
+            오늘의 핵심 흐름
+          </h2>
+          <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-200">
+            {normalizeEditorialText(briefing.summary, 3)}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2.5">

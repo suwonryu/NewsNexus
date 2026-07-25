@@ -265,6 +265,16 @@ function normalizeDailyBriefingResponse(
     sentimentSummary: normalizeSentimentSummary(response.sentimentSummary),
     generatedAt: response.generatedAt ?? null,
     editorialAnalysis: normalizeEditorialAnalysis(response.editorialAnalysis),
+    qualityScore: normalizeOptionalRatio(response.qualityScore),
+    relevantArticleRatio: normalizeOptionalRatio(response.relevantArticleRatio),
+    representativeArticleCount:
+      typeof response.representativeArticleCount === 'number'
+        ? normalizeCount(response.representativeArticleCount)
+        : undefined,
+    uniqueSourceCount:
+      typeof response.uniqueSourceCount === 'number'
+        ? normalizeCount(response.uniqueSourceCount)
+        : undefined,
   };
 }
 
@@ -350,4 +360,10 @@ function normalizeOptionalText(value: string | null | undefined): string | null 
 
 function normalizeCount(value: number | undefined): number {
   return typeof value === 'number' && value > 0 ? value : 0;
+}
+
+function normalizeOptionalRatio(value: number | undefined): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : undefined;
 }

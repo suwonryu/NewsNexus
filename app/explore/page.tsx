@@ -173,6 +173,28 @@ function IssueExplorer({
                       대표 기사 보기
                     </Link>
                   )}
+                  {cluster.articles.length > 1 && (
+                    <details className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
+                      <summary className="cursor-pointer text-sm font-semibold text-slate-600 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
+                        함께 묶인 기사 {cluster.articles.length - 1}건
+                      </summary>
+                      <ul className="mt-3 space-y-2">
+                        {cluster.articles.slice(1).map((article) => (
+                          <li key={`${article.id ?? 'original'}:${article.link}`}>
+                            <Link
+                              href={article.id ? `/news/${article.id}` : article.link}
+                              className="block rounded-xl bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-700 hover:text-[#0066cc] dark:bg-black/20 dark:text-slate-200 dark:hover:text-[#2997ff]"
+                            >
+                              {article.title}
+                              <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                                {article.sourceName}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </article>
               ))}
             </div>

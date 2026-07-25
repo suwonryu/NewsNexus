@@ -50,6 +50,15 @@ export interface ArticleImpactAnalysis {
   relevanceConfidence: number;
   relevanceReason: string;
   matchedEntities: string[];
+  editorialPriority?: number;
+  coreEligible?: boolean;
+  exclusionReason?: string | null;
+  priorityBreakdown?: {
+    relevanceScore: number;
+    impactScore: number;
+    sourceReliability: number;
+    coverageWeight: number;
+  };
   clusterId: string | null;
   clusterTitle: string | null;
   impact: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;

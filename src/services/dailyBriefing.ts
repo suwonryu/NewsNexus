@@ -50,6 +50,10 @@ export interface DailyBriefingResponse {
   sentimentSummary: DailyBriefingSentimentSummary;
   generatedAt: string | null;
   editorialAnalysis: DailyBriefingEditorialAnalysis | null;
+  qualityScore?: number;
+  relevantArticleRatio?: number;
+  representativeArticleCount?: number;
+  uniqueSourceCount?: number;
 }
 
 const STOPWORDS = new Set([

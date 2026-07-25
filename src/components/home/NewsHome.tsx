@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ArticleListItem } from '../../types/article';
 import type { BankImpact, HomeData, HomeIssueCluster } from '../../services/home';
+import { getTopicDisplayName } from '../../services/contentQuality';
 import { SiteHeader } from '../SiteHeader';
 
 interface NewsHomeProps {
@@ -53,10 +54,10 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
               </div>
 
               <h1 className="mt-6 max-w-4xl text-3xl font-[750] leading-[1.18] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
-                {briefing?.headline ?? '카카오뱅크의 오늘을 분석하고 있습니다'}
+                {briefing?.displayHeadline ?? '카카오뱅크의 오늘을 분석하고 있습니다'}
               </h1>
               <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8">
-                {briefing?.summary ??
+                {briefing?.displaySummary ??
                   '관련 기사와 중복 보도를 정리해 가장 중요한 변화와 카카오뱅크 영향을 곧 제공하겠습니다.'}
               </p>
 
@@ -67,7 +68,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
                       key={tag}
                       className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
                     >
-                      {tag}
+                      {getTopicDisplayName(tag)}
                     </li>
                   ))}
                 </ul>
@@ -287,6 +288,28 @@ function IssueCard({
           </Link>
         </div>
       </div>
+      {cluster.articles.length > 1 && (
+        <details className="mt-4 border-t border-slate-200 pt-4 text-sm dark:border-white/10">
+          <summary className="cursor-pointer font-semibold text-slate-600 marker:text-slate-400 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
+            함께 묶인 기사 {cluster.articles.length - 1}건 펼쳐보기
+          </summary>
+          <ul className="mt-3 space-y-2">
+            {cluster.articles.slice(1).map((article) => (
+              <li key={`${article.id ?? 'original'}-${article.link}`}>
+                <Link
+                  href={article.id ? `/news/${article.id}` : article.link}
+                  className="block rounded-xl bg-slate-50 px-3 py-2.5 leading-5 text-slate-700 hover:text-[#0066cc] dark:bg-black/20 dark:text-slate-200 dark:hover:text-[#2997ff]"
+                >
+                  {article.title}
+                  <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
+                    {article.sourceName}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </article>
   );
 }

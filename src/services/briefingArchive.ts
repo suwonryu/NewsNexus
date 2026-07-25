@@ -1,5 +1,9 @@
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getDailyBriefing } from './articleServerApi';
+import {
+  evaluateBriefingQuality,
+  normalizeEditorialText,
+} from './contentQuality';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -11,6 +15,10 @@ export interface BriefingArchiveItem {
   topicTags: string[];
   publishedAt: string | null;
   updatedAt: string | null;
+  qualityScore?: number;
+  relevantArticleRatio?: number;
+  representativeArticleCount?: number;
+  uniqueSourceCount?: number;
 }
 
 export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchiveItem[]> {
@@ -33,9 +41,13 @@ export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchi
         return (await response.json()) as BriefingArchiveItem[];
       }),
     );
-    const items = responses.flat().map(normalizeItem).filter(isArchiveItem);
+    const items = responses
+      .flat()
+      .map(normalizeItem)
+      .filter(isArchiveItem)
+      .filter(passesArchiveQualityGate);
     if (items.length > 0) {
-      return sortItems(items);
+      return sortItems(await filterArchiveByDetailedQuality(items));
     }
   } catch {
     // The compatibility path below keeps the archive usable during backend rollout.
@@ -55,7 +67,8 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
     }
     const items = ((await response.json()) as BriefingArchiveItem[])
       .map(normalizeItem)
-      .filter(isArchiveItem);
+      .filter(isArchiveItem)
+      .filter(passesArchiveQualityGate);
     if (items.length > 0) {
       return sortItems(items);
     }
@@ -73,17 +86,32 @@ async function buildCompatibilityArchive(): Promise<BriefingArchiveItem[]> {
     if (briefing.status !== 'READY' || !briefing.summary) {
       continue;
     }
-    items.push({
+    const item: BriefingArchiveItem = {
       date,
       headline:
         briefing.editorialAnalysis?.keyChanges?.[0] ||
         briefing.keywords.slice(0, 3).join(' · ') ||
         `${date} 카카오뱅크 뉴스 브리핑`,
-      summary: briefing.summary,
+      summary: normalizeEditorialText(briefing.summary, 3),
       topicTags: briefing.keywords.slice(0, 3),
       publishedAt: briefing.generatedAt,
       updatedAt: briefing.generatedAt,
-    });
+      qualityScore: briefing.qualityScore,
+      relevantArticleRatio:
+        briefing.relevantArticleRatio ??
+        (briefing.articleCount > 0
+          ? (briefing.articleCount - briefing.sentimentSummary.unrelatedCount) /
+            briefing.articleCount
+          : 0),
+      representativeArticleCount:
+        briefing.representativeArticleCount ?? briefing.featuredArticles.length,
+      uniqueSourceCount:
+        briefing.uniqueSourceCount ??
+        new Set(briefing.featuredArticles.map((article) => article.sourceName)).size,
+    };
+    if (passesArchiveQualityGate(item)) {
+      items.push(item);
+    }
   }
   return sortItems(items);
 }
@@ -98,12 +126,17 @@ function normalizeItem(value: Partial<BriefingArchiveItem>): BriefingArchiveItem
       typeof value.headline === 'string' && value.headline.trim()
         ? value.headline.trim()
         : `${value.date} 카카오뱅크 뉴스 브리핑`,
-    summary: typeof value.summary === 'string' ? value.summary.trim() : '',
+    summary:
+      typeof value.summary === 'string' ? normalizeEditorialText(value.summary, 3) : '',
     topicTags: Array.isArray(value.topicTags)
       ? value.topicTags.filter((tag): tag is string => typeof tag === 'string').slice(0, 3)
       : [],
     publishedAt: typeof value.publishedAt === 'string' ? value.publishedAt : null,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null,
+    qualityScore: normalizeOptionalRatio(value.qualityScore),
+    relevantArticleRatio: normalizeOptionalRatio(value.relevantArticleRatio),
+    representativeArticleCount: normalizeOptionalCount(value.representativeArticleCount),
+    uniqueSourceCount: normalizeOptionalCount(value.uniqueSourceCount),
   };
 }
 
@@ -113,6 +146,53 @@ function isArchiveItem(value: BriefingArchiveItem | null): value is BriefingArch
 
 function sortItems(items: BriefingArchiveItem[]) {
   return [...items].sort((left, right) => right.date.localeCompare(left.date));
+}
+
+export function passesArchiveQualityGate(item: BriefingArchiveItem): boolean {
+  return evaluateBriefingQuality({
+    headline: item.headline,
+    summary: item.summary,
+    qualityScore: item.qualityScore,
+    relevantArticleRatio: item.relevantArticleRatio,
+    representativeArticleCount: item.representativeArticleCount,
+    uniqueSourceCount: item.uniqueSourceCount,
+  }).passes;
+}
+
+async function filterArchiveByDetailedQuality(
+  items: BriefingArchiveItem[],
+): Promise<BriefingArchiveItem[]> {
+  const results = new Array<BriefingArchiveItem | null>(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(8, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      const item = items[index];
+      const briefing = await getDailyBriefing(item.date, { enqueue: false });
+      if (briefing.status !== 'READY' || !briefing.summary) {
+        results[index] = null;
+        continue;
+      }
+      const uniqueSourceCount =
+        briefing.uniqueSourceCount ??
+        new Set(briefing.featuredArticles.map((article) => article.sourceName)).size;
+      const quality = evaluateBriefingQuality({
+        headline: item.headline,
+        summary: briefing.summary,
+        articleCount: briefing.articleCount,
+        unrelatedArticleCount: briefing.sentimentSummary.unrelatedCount,
+        relevantArticleRatio: briefing.relevantArticleRatio,
+        representativeArticleCount:
+          briefing.representativeArticleCount ?? briefing.featuredArticles.length,
+        uniqueSourceCount,
+        qualityScore: briefing.qualityScore,
+      });
+      results[index] = quality.passes ? item : null;
+    }
+  });
+  await Promise.all(workers);
+  return results.filter(isArchiveItem);
 }
 
 function recentMonths(count: number): Array<{ year: number; month: number }> {
@@ -133,4 +213,16 @@ function recentMonths(count: number): Array<{ year: number; month: number }> {
       month: (zeroBased % 12) + 1,
     };
   });
+}
+
+function normalizeOptionalRatio(value: number | undefined): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : undefined;
+}
+
+function normalizeOptionalCount(value: number | undefined): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.floor(value))
+    : undefined;
 }

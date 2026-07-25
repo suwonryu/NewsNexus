@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '../../src/components/SiteHeader';
+import { DEFAULT_OG_IMAGE, SITE_NAME } from '../../src/lib/siteMetadata';
+import { getSiteUrl } from '../../src/lib/siteUrl';
 import {
   getBriefingArchive,
   type BriefingArchiveItem,
@@ -12,15 +14,57 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/archive',
   },
+  openGraph: {
+    title: '카카오뱅크 뉴스 브리핑 아카이브',
+    description: '품질 기준을 통과한 날짜별 카카오뱅크 뉴스 브리핑을 모아봅니다.',
+    url: '/archive',
+    siteName: SITE_NAME,
+    locale: 'ko_KR',
+    type: 'website',
+    images: [DEFAULT_OG_IMAGE],
+  },
 };
 
-export default async function ArchivePage() {
+const ARCHIVE_PAGE_SIZE = 24;
+
+interface ArchivePageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function ArchivePage({ searchParams }: ArchivePageProps) {
+  const params = await searchParams;
+  const requestedPage = Number(params.page);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const items = await getBriefingArchive(12);
-  const groups = groupByMonth(items);
+  const pageCount = Math.max(1, Math.ceil(items.length / ARCHIVE_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageItems = items.slice(
+    (currentPage - 1) * ARCHIVE_PAGE_SIZE,
+    currentPage * ARCHIVE_PAGE_SIZE,
+  );
+  const groups = groupByMonth(pageItems);
+  const siteUrl = getSiteUrl();
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `카카오뱅크 뉴스 브리핑 아카이브 ${currentPage}페이지`,
+    numberOfItems: pageItems.length,
+    itemListElement: pageItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: (currentPage - 1) * ARCHIVE_PAGE_SIZE + index + 1,
+      name: item.headline,
+      url: `${siteUrl}/briefing/${item.date}`,
+    })),
+  };
 
   return (
-    <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
         <SiteHeader active="briefings" />
 
         <section className="mt-12">
@@ -29,8 +73,8 @@ export default async function ArchivePage() {
             브리핑 아카이브
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-            완료된 브리핑만 날짜순으로 제공합니다. 각 날짜의 핵심 주제와 카카오뱅크 영향을
-            이어서 확인할 수 있습니다.
+            품질 기준을 통과한 완료 브리핑만 날짜순으로 제공합니다. 각 날짜의 핵심 주제와
+            카카오뱅크 영향을 이어서 확인할 수 있습니다.
           </p>
         </section>
 
@@ -76,14 +120,55 @@ export default async function ArchivePage() {
                 </ul>
               </section>
             ))}
+            <ArchivePagination currentPage={currentPage} pageCount={pageCount} />
           </div>
         ) : (
           <div className="mt-12 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
             완료된 브리핑을 불러오고 있습니다.
           </div>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
+  );
+}
+
+function ArchivePagination({
+  currentPage,
+  pageCount,
+}: {
+  currentPage: number;
+  pageCount: number;
+}) {
+  if (pageCount <= 1) {
+    return null;
+  }
+  return (
+    <nav aria-label="아카이브 페이지" className="flex items-center justify-between gap-4">
+      {currentPage > 1 ? (
+        <Link
+          href={currentPage === 2 ? '/archive' : `/archive?page=${currentPage - 1}`}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
+        >
+          ← 이전 24개
+        </Link>
+      ) : (
+        <span />
+      )}
+      <span className="text-sm text-slate-500 dark:text-slate-400">
+        {currentPage} / {pageCount}
+      </span>
+      {currentPage < pageCount ? (
+        <Link
+          href={`/archive?page=${currentPage + 1}`}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
+        >
+          다음 24개 →
+        </Link>
+      ) : (
+        <span />
+      )}
+    </nav>
   );
 }
 
