@@ -54,16 +54,16 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   if (briefing.status === 'PREPARING') {
     return {
       title: `${date} 브리핑 준비 중`,
-      description: `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
+      description: `${formatKoreanDate(date)}의 주요 소식을 정리하고 있습니다. 가장 최근 브리핑을 먼저 만나보세요.`,
       alternates: { canonical },
       openGraph: buildBriefingOpenGraph({
         title: `${date} 브리핑 준비 중`,
-        description: `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
+        description: `${formatKoreanDate(date)}의 주요 소식을 정리하고 있습니다. 가장 최근 브리핑을 먼저 만나보세요.`,
         canonical,
       }),
       twitter: buildTwitterMetadata(
         `${date} 브리핑 준비 중`,
-        `${formatKoreanDate(date)} 브리핑은 아직 집계 중입니다.`,
+        `${formatKoreanDate(date)}의 주요 소식을 정리하고 있습니다. 가장 최근 브리핑을 먼저 만나보세요.`,
       ),
       robots: { index: false, follow: true },
     };
@@ -72,16 +72,16 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   if (briefing.status === 'NOT_FOUND') {
     return {
       title: `${date} 브리핑을 찾을 수 없습니다`,
-      description: `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
+      description: `${formatKoreanDate(date)}에는 준비된 브리핑이 없습니다. 다른 날짜의 브리핑을 둘러보세요.`,
       alternates: { canonical },
       openGraph: buildBriefingOpenGraph({
         title: `${date} 브리핑을 찾을 수 없습니다`,
-        description: `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
+        description: `${formatKoreanDate(date)}에는 준비된 브리핑이 없습니다. 다른 날짜의 브리핑을 둘러보세요.`,
         canonical,
       }),
       twitter: buildTwitterMetadata(
         `${date} 브리핑을 찾을 수 없습니다`,
-        `${formatKoreanDate(date)} 브리핑 데이터가 없습니다.`,
+        `${formatKoreanDate(date)}에는 준비된 브리핑이 없습니다. 다른 날짜의 브리핑을 둘러보세요.`,
       ),
       robots: { index: false, follow: false },
     };
@@ -151,7 +151,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-slate-600"
               >
-                이슈 탐색으로
+                이슈 둘러보기
               </Link>
               <span className="inline-flex items-center rounded-full border border-[#0071e3] bg-blue-50 px-4 py-2 text-sm font-medium text-[#0066cc] dark:border-[#2997ff]/60 dark:bg-blue-500/10 dark:text-[#2997ff]">
                 {date}
@@ -172,13 +172,13 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Featured</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Further Reading</p>
                 <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                  대표 기사
+                  함께 읽을 기사
                 </h2>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                상위 {briefing.featuredArticles.length}건
+                {briefing.featuredArticles.length}건
               </span>
             </div>
 
@@ -195,9 +195,9 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
 
           <div className="grid gap-4">
             <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Signals</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Watch</p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                주목 포인트
+                놓치지 말 것
               </h2>
               <div className="mt-4 space-y-3">
                 {getSignalItems(briefing).map((signal, index) => (
@@ -218,7 +218,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
                 ))}
                 {getSignalItems(briefing).length === 0 && (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-300">
-                    아직 추출된 핵심 키워드가 없습니다.
+                    오늘은 따로 짚어볼 키워드가 없어요.
                   </div>
                 )}
               </div>
@@ -227,7 +227,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
             <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Sources</p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                출처
+                참고한 언론사
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 {briefing.sourceNames.map((sourceName) => (
@@ -258,7 +258,7 @@ function BriefingIssueSection({ clusters }: { clusters: HomeIssueCluster[] }) {
         KakaoBank Impact
       </p>
       <h2 className="mt-2 text-2xl font-[740] text-slate-950 dark:text-slate-50">
-        카카오뱅크 직접 영향
+        카카오뱅크에 미치는 영향
       </h2>
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         {clusters.slice(0, 3).map((cluster) => (
@@ -280,7 +280,7 @@ function BriefingIssueSection({ clusters }: { clusters: HomeIssueCluster[] }) {
                 href={`/news/${cluster.representativeArticleId}`}
                 className="mt-4 inline-flex text-sm font-semibold text-[#0066cc] hover:underline dark:text-[#2997ff]"
               >
-                근거 기사 보기
+                관련 기사 보기
               </Link>
             )}
           </article>
@@ -383,7 +383,7 @@ function buildBriefingStructuredData({
           {
             '@type': 'ListItem',
             position: 2,
-            name: '브리핑 아카이브',
+            name: '지난 브리핑',
             item: `${siteUrl}/archive`,
           },
           {
@@ -407,10 +407,10 @@ function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingRespons
   }
 
   const details = [
-    { label: '전일 대비', value: analysis.changeFromPreviousDay },
-    { label: '카카오뱅크 영향', value: analysis.kakaoBankImpact },
-    { label: '출처 관점', value: analysis.sourcePerspective },
-    { label: '다음 관찰', value: analysis.watchPoint },
+    { label: '어제와 달라진 점', value: analysis.changeFromPreviousDay },
+    { label: '카카오뱅크에는', value: analysis.kakaoBankImpact },
+    { label: '뉴스가 바라본 시선', value: analysis.sourcePerspective },
+    { label: '앞으로 볼 것', value: analysis.watchPoint },
   ].filter((item): item is { label: string; value: string } => Boolean(item.value));
 
   if (analysis.keyChanges.length === 0 && details.length === 0) {
@@ -419,8 +419,8 @@ function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingRespons
 
   return (
     <section className="mt-4 border-y border-slate-200 py-6 dark:border-slate-700">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Editorial Analysis</p>
-      <h2 className="mt-2 text-2xl font-[740] text-slate-950 dark:text-slate-50">편집 분석</h2>
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Today&apos;s View</p>
+      <h2 className="mt-2 text-2xl font-[740] text-slate-950 dark:text-slate-50">오늘의 관점</h2>
 
       {analysis.keyChanges.length > 0 && (
         <ol className="mt-5 grid gap-3 md:grid-cols-2">
@@ -532,17 +532,17 @@ async function PreparingBriefingState({
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
-          mobileTitle="브리핑 준비 중"
+          mobileTitle="오늘의 소식을 정리하고 있어요"
           actions={
             <>
               <Link
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
               >
-                이슈 탐색으로
+                이슈 둘러보기
               </Link>
               <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                집계 중
+                새 소식 정리 중
               </span>
             </>
           }
@@ -555,28 +555,28 @@ async function PreparingBriefingState({
               Preparing Briefing
             </p>
             <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
-              오늘 브리핑은 아직 준비 중입니다
+              오늘의 브리핑을 준비하고 있어요
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-200">
-              오늘 브리핑은 현재 기사 수집과 분석이 진행 중이어서 아직 제공되지 않습니다.
-              브리핑은 하루 단위 집계가 마무리된 뒤 순차적으로 공개됩니다.
+              오늘 카카오뱅크를 둘러싼 소식을 차분히 살펴보고 있어요. 기다리는 동안 가장
+              최근 브리핑이나 지난 이슈를 먼저 둘러보세요.
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-3">
               <StatusCard
-                label="상태"
-                value="준비 중"
-                description={`현재 ${home.collection.articleCount}건의 기사 데이터가 집계됐습니다.`}
+                label="오늘 들어온 소식"
+                value={`${home.collection.articleCount}건`}
+                description="카카오뱅크와 금융권에서 오늘 전해진 소식이에요."
               />
               <StatusCard
-                label="브리핑 공개"
-                value="집계 완료 후"
-                description="분석이 완료되면 오늘 브리핑을 확인할 수 있습니다."
+                label="먼저 읽기"
+                value="최근 브리핑"
+                description="가장 최근 하루의 핵심 흐름을 먼저 살펴보세요."
               />
               <StatusCard
-                label="추천 보기"
-                value="어제 브리핑"
-                description="완성된 하루 요약은 이전 날짜 브리핑에서 확인할 수 있습니다."
+                label="함께 보기"
+                value="주요 이슈"
+                description="뉴스를 이슈별로 모아 흐름을 빠르게 훑어볼 수 있어요."
               />
             </div>
 
@@ -585,13 +585,13 @@ async function PreparingBriefingState({
                 href={`/briefing/${latestReadyDate}`}
                 className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
               >
-                {latestReadyDate} 최신 완료 브리핑
+                {latestReadyDate} 브리핑 읽기
               </Link>
               <Link
                 href="/explore"
                 className="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600"
               >
-                이슈 탐색으로 돌아가기
+                주요 이슈 둘러보기
               </Link>
             </div>
           </div>
@@ -613,13 +613,13 @@ function NotFoundBriefingState({
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
           desktopTitle={`${formatKoreanDate(date)} 데일리 브리핑`}
-          mobileTitle="브리핑 없음"
+          mobileTitle="이날의 브리핑은 없어요"
           actions={
             <Link
               href="/explore"
               className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
             >
-              이슈 탐색으로
+              다른 이슈 둘러보기
             </Link>
           }
         />
@@ -627,11 +627,11 @@ function NotFoundBriefingState({
         <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_10px_34px_rgba(0,0,0,0.07)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_24px_58px_rgba(0,0,0,0.42)] lg:p-8">
           <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">No Briefing</p>
           <h2 className="mt-3 text-4xl font-[780] tracking-[-0.05em] text-slate-950 dark:text-slate-50 lg:text-5xl">
-            이 날짜의 브리핑 데이터가 없습니다
+            이 날짜에는 브리핑이 없어요
           </h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-300">
-            미래 날짜이거나, 해당 날짜에는 브리핑을 만들 수 있는 기사 데이터가 아직 없습니다.
-            기사 탐색 화면으로 돌아가 다른 날짜를 살펴보는 편이 좋습니다.
+            다른 날짜를 골라 카카오뱅크의 주요 소식과 흐름을 살펴보세요. 최근 브리핑부터
+            둘러보는 것도 좋습니다.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -639,7 +639,7 @@ function NotFoundBriefingState({
               href="/explore"
               className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
             >
-              이슈 탐색으로 이동
+              다른 날짜 둘러보기
             </Link>
           </div>
         </section>

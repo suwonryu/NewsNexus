@@ -741,7 +741,7 @@ function App({
                 href={getBriefingHref(selectedDate)}
                 className="inline-flex items-center rounded-full border border-[#0071e3] bg-[#0071e3] px-3 py-1.5 text-xs font-semibold text-white transition hover:border-[#0066cc] hover:bg-[#0066cc] dark:border-[#2997ff] dark:bg-[#2997ff] dark:text-black"
               >
-                {isCurrentIsoDate(selectedDate) ? '브리핑 준비 중' : '브리핑 보기'}
+                {isCurrentIsoDate(selectedDate) ? '오늘 소식 정리 중' : '브리핑 보기'}
               </Link>
             )}
             <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 md:inline">

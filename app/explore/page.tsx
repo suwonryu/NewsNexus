@@ -7,7 +7,7 @@ import { getHomeData, getIssues, type HomeIssueCluster } from '../../src/service
 
 export const metadata: Metadata = {
   title: '카카오뱅크 기사 탐색',
-  description: '날짜별 카카오뱅크 뉴스 기사와 AI 요약을 탐색합니다.',
+  description: '날짜와 관심 주제를 골라 카카오뱅크 관련 뉴스의 흐름과 핵심 내용을 살펴보세요.',
   alternates: {
     canonical: '/explore',
   },
@@ -78,6 +78,9 @@ function IssueExplorer({
             <h1 className="mt-2 text-3xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-white">
               이슈별 보기
             </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+              날짜와 관심 범위를 고르면 그날의 주요 소식을 한눈에 살펴볼 수 있어요.
+            </p>
           </div>
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <form method="get" className="flex flex-wrap items-end gap-3">
@@ -113,18 +116,18 @@ function IssueExplorer({
 
           <fieldset className="mt-5 border-t border-slate-200 pt-5 dark:border-white/10">
             <legend className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              관련도 필터
+              관심 범위
             </legend>
             <div className="mt-2 flex gap-2">
               <RelevanceLink
                 active={relevance === 'DIRECT'}
                 href={`/explore?date=${date}&relevance=DIRECT`}
-                label="직접 관련"
+                label="카카오뱅크 소식"
               />
               <RelevanceLink
                 active={relevance === 'INDUSTRY'}
                 href={`/explore?date=${date}&relevance=INDUSTRY`}
-                label="산업 관련"
+                label="금융권 흐름"
               />
             </div>
           </fieldset>
@@ -140,7 +143,7 @@ function IssueExplorer({
                 {date} 이슈
               </h2>
               <span className="text-sm text-slate-500 dark:text-slate-400">
-                {clusters.length}개 묶음
+                주요 이슈 {clusters.length}개
               </span>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -159,7 +162,7 @@ function IssueExplorer({
                     {cluster.summary}
                   </p>
                   <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:bg-black/20 dark:text-slate-200">
-                    <span className="font-semibold">카카오뱅크 영향: </span>
+                    <span className="font-semibold">왜 중요한가: </span>
                     {cluster.impactReason}
                   </div>
                   {cluster.representativeArticleId && (
@@ -173,7 +176,7 @@ function IssueExplorer({
                   {cluster.articles.length > 1 && (
                     <details className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
                       <summary className="cursor-pointer text-sm font-semibold text-slate-600 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
-                        함께 묶인 기사 {cluster.articles.length - 1}건
+                        관련 기사 {cluster.articles.length - 1}건 함께 보기
                       </summary>
                       <ul className="mt-3 space-y-2">
                         {cluster.articles.slice(1).map((article) => (
@@ -198,8 +201,8 @@ function IssueExplorer({
           </section>
         ) : (
           <div className="mt-8 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
-            이 날짜의 {relevance === 'DIRECT' ? '직접 관련' : '산업 관련'} 이슈를 분석하고
-            있습니다. 기사별 보기에서는 수집 원문을 먼저 확인할 수 있습니다.
+            이날 눈여겨볼 {relevance === 'DIRECT' ? '카카오뱅크 소식' : '금융권 이슈'}은 아직
+            없어요. 기사별 보기에서 개별 뉴스를 살펴보세요.
           </div>
         )}
       </div>

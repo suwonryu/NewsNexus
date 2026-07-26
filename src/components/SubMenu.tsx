@@ -172,12 +172,12 @@ function SubMenu({
               <select
                 value={availabilityFilter}
                 onChange={(event) => setAvailabilityFilter(event.target.value as AvailabilityFilter)}
-                aria-label="상세 조회 필터"
+                aria-label="기사 보기 방식"
                 className="h-9 min-w-0 rounded-xl border border-[#d2d2d7] bg-white px-2 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 dark:border-[#424245] dark:bg-[#1d1d1f] dark:text-slate-200 dark:focus:border-[#2997ff] dark:focus:ring-[#2997ff]/20"
               >
                 <option value="all">전체 기사</option>
-                <option value="detail">요약 있음</option>
-                <option value="source">원문만</option>
+                <option value="detail">핵심 내용 보기</option>
+                <option value="source">기사 원문</option>
               </select>
             </div>
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -265,7 +265,7 @@ function SubMenu({
                       <div className="text-sm font-[650] text-slate-900 dark:text-slate-50">{article.title}</div>
                       <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{article.sourceName}</div>
                       {!canOpenNullIdArticle && (
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-500">상세 조회 불가</div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-500">목록에서만 볼 수 있어요</div>
                       )}
                     </button>
                   )}
@@ -276,11 +276,11 @@ function SubMenu({
 
           {isLoading && <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">불러오는 중...</p>}
           {selectedDate && !isLoading && items.length === 0 && (
-            <p className="text-sm text-slate-600 dark:text-slate-300">기사가 없습니다</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">이날은 보여드릴 기사가 없어요.</p>
           )}
           {selectedDate && !isLoading && items.length > 0 && visibleItems.length === 0 && (
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-300">
-              필터와 일치하는 기사가 없습니다
+              조건을 조금 바꾸면 더 많은 기사를 볼 수 있어요.
             </p>
           )}
 

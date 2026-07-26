@@ -106,7 +106,9 @@ function MainContent({
   };
   const getSummaryText = (summary: string | null) => {
     const formatted = formatSummary(summary);
-    return formatted.length > 0 ? formatted : '요약 내용이 제공되지 않았습니다.';
+    return formatted.length > 0
+      ? formatted
+      : '이 기사에는 짧은 요약이 없어요. 원문에서 자세한 내용을 확인해 주세요.';
   };
   const formatImpact = (
     impact: NonNullable<ArticleDetail['analysis']>['impact'] | null,
@@ -121,7 +123,7 @@ function MainContent({
       case 'MIXED':
         return '혼합 영향';
       default:
-        return '분석 준비 중';
+        return '영향 살펴보는 중';
     }
   };
   const getImpactBadgeClassName = (impact: string | null | undefined) => {
@@ -147,7 +149,7 @@ function MainContent({
       case 'IRRELEVANT':
         return '관련 없음';
       default:
-        return '관련도 분석 중';
+        return '분류 전';
     }
   };
   const formatHorizon = (horizon: string | null | undefined) => {
@@ -167,7 +169,7 @@ function MainContent({
   if (!selectedDate) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600 dark:text-slate-300">날짜를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">먼저 살펴볼 날짜를 골라주세요.</p>
       </main>
     );
   }
@@ -177,7 +179,7 @@ function MainContent({
       <main className={containerClassName}>
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Article Detail</p>
         <h1 className="mb-2 text-3xl font-[650] text-slate-900 dark:text-slate-50">{pendingArticle.title}</h1>
-        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">기사 내용을 불러오는 중...</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">핵심 내용을 불러오고 있어요.</p>
         <div className="mt-4 space-y-2 animate-pulse">
           <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800" />
           <div className="h-4 w-[92%] rounded bg-slate-200 dark:bg-slate-800" />
@@ -191,7 +193,7 @@ function MainContent({
   if (selectedArticleId === null) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600 dark:text-slate-300">기사를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">읽고 싶은 기사를 선택해 주세요.</p>
       </main>
     );
   }
@@ -207,7 +209,7 @@ function MainContent({
   if (!articleDetail) {
     return (
       <main className={containerClassName}>
-        <p className="text-slate-600 dark:text-slate-300">기사를 선택하세요</p>
+        <p className="text-slate-600 dark:text-slate-300">읽고 싶은 기사를 선택해 주세요.</p>
       </main>
     );
   }
@@ -229,40 +231,42 @@ function MainContent({
           <ShareIcon className="h-[1.05rem] w-[1.05rem]" />
         </button>
       </div>
-      <p className="mb-2 text-sm text-slate-600 dark:text-slate-300">뉴스 ID: {articleDetail.id}</p>
-      <div className="flex flex-wrap gap-2">
-        <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-200 md:font-semibold">
-          {formatRelevance(articleDetail.analysis?.relevanceLevel)}
-        </span>
-        <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium md:font-semibold ${getImpactBadgeClassName(articleDetail.analysis?.impact)}`}
-        >
-          카카오뱅크 영향: {formatImpact(articleDetail.analysis?.impact ?? null)}
-        </span>
-      </div>
+      {articleDetail.analysis && (
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-200 md:font-semibold">
+            {formatRelevance(articleDetail.analysis.relevanceLevel)}
+          </span>
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium md:font-semibold ${getImpactBadgeClassName(articleDetail.analysis.impact)}`}
+          >
+            카카오뱅크 영향: {formatImpact(articleDetail.analysis.impact ?? null)}
+          </span>
+        </div>
+      )}
       {articleDetail.analysis ? (
         <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/70">
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">관련도 근거</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">카카오뱅크와의 연결</p>
             <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
               {articleDetail.analysis.relevanceReason}
             </p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              영향 해석
+              왜 눈여겨볼까
               {formatHorizon(articleDetail.analysis.impactHorizon)
                 ? ` · ${formatHorizon(articleDetail.analysis.impactHorizon)}`
                 : ''}
             </p>
             <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
-              {articleDetail.analysis.impactReason ?? '영향 근거를 분석하고 있습니다.'}
+              {articleDetail.analysis.impactReason ??
+                '이 소식이 카카오뱅크에 미칠 영향은 아직 뚜렷하지 않습니다.'}
             </p>
           </div>
         </div>
       ) : (
         <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-          관련도와 카카오뱅크 영향 근거를 분석하고 있습니다.
+          이 기사는 핵심 내용만 간단히 소개합니다. 자세한 맥락은 원문에서 확인해 주세요.
         </p>
       )}
       {shareStatus !== 'idle' && (

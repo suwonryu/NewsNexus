@@ -103,7 +103,7 @@ export default async function TopicPage({ params, searchParams }: TopicPageProps
       <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
         <div className="site-container">
           <section className="mt-12 rounded-[30px] border border-white/70 bg-white/90 p-7 shadow-[0_24px_80px_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-[#18181a]/90 sm:p-10">
-            <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">누적 주제 분석</p>
+            <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">주제별 흐름</p>
             <h1 className="mt-3 text-4xl font-[760] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
               {topic.title}
             </h1>
@@ -125,7 +125,7 @@ export default async function TopicPage({ params, searchParams }: TopicPageProps
               id="topic-briefings"
               className="text-2xl font-[730] tracking-[-0.035em] text-slate-950 dark:text-white"
             >
-              관련 완료 브리핑
+              함께 읽어볼 브리핑
             </h2>
             <ul className="mt-5 space-y-3">
               {briefings.map((briefing) => (

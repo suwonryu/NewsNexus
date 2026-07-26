@@ -14,7 +14,7 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
           {briefing.date} 브리핑
         </h2>
         <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
-          아직 브리핑을 구성할 수 있는 기사 데이터가 없습니다.
+          이날은 따로 정리해드릴 소식이 없어요. 다른 날짜의 브리핑을 둘러보세요.
         </p>
       </section>
     );
@@ -51,25 +51,24 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Analysis Scope
+                한눈에 보기
               </p>
               <h2 className="mt-2 text-2xl font-[740] tracking-[-0.04em] text-slate-950 dark:text-slate-50">
-                브리핑 분석 범위
+                오늘 살펴본 뉴스
               </h2>
             </div>
             <span className="rounded-full border border-blue-200/80 bg-blue-50/80 px-3 py-1 text-xs font-medium text-blue-800 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200">
-              수집 기사 {briefing.articleCount}건
+              {briefing.articleCount}건의 소식
             </span>
           </div>
 
           <dl className="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
-            <AnalysisCount label="수집 기사" value={briefing.articleCount} />
-            <AnalysisCount label="수집 출처" value={briefing.sourceCount} suffix="개" />
-            <AnalysisCount label="대표 기사" value={briefing.featuredArticles.length} />
+            <AnalysisCount label="관련 뉴스" value={briefing.articleCount} />
+            <AnalysisCount label="언론사" value={briefing.sourceCount} suffix="곳" />
+            <AnalysisCount label="깊이 읽기" value={briefing.featuredArticles.length} />
           </dl>
           <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm leading-6 text-blue-950 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-100">
-            긍정·부정 비율 대신, 아래 편집 분석과 이슈별 카드에서 카카오뱅크에 미치는
-            영향과 근거를 함께 제공합니다.
+            각 소식이 카카오뱅크에 어떤 의미가 있는지, 아래에서 흐름과 함께 살펴보세요.
           </div>
         </section>
       </div>

@@ -41,21 +41,21 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
                       : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200'
                   }`}
                 >
-                  {isPreparing ? '오늘 브리핑 집계 중' : '오늘 브리핑 완료'}
+                  {isPreparing ? '오늘의 새 소식 정리 중' : '오늘의 브리핑'}
                 </span>
                 {briefing && (
                   <span className="text-sm text-slate-500 dark:text-slate-400">
-                    최신 완료 {formatDate(briefing.date)}
+                    최근 브리핑 · {formatDate(briefing.date)}
                   </span>
                 )}
               </div>
 
               <h1 className="mt-6 max-w-4xl text-3xl font-[750] leading-[1.18] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
-                {briefing?.displayHeadline ?? '카카오뱅크의 오늘을 분석하고 있습니다'}
+                {briefing?.displayHeadline ?? '오늘의 주요 소식을 곧 전해드릴게요'}
               </h1>
               <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8">
                 {briefing?.displaySummary ??
-                  '관련 기사와 중복 보도를 정리해 가장 중요한 변화와 카카오뱅크 영향을 곧 제공하겠습니다.'}
+                  '기다리는 동안 지난 브리핑에서 카카오뱅크를 둘러싼 중요한 변화와 흐름을 먼저 살펴보세요.'}
               </p>
 
               {briefing && briefing.topicTags.length > 0 && (
@@ -91,24 +91,24 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
 
             <aside className="border-t border-slate-200/80 bg-slate-50/80 p-6 dark:border-white/10 dark:bg-white/[0.035] sm:p-8 lg:border-l lg:border-t-0">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                Today&apos;s collection
+                오늘 들어온 뉴스
               </p>
               <p className="mt-5 text-5xl font-[760] tracking-[-0.05em] text-slate-950 dark:text-white">
                 {home.collection.articleCount}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                오늘 수집된 기사입니다. 관련도 분석을 거쳐 직접 관련 이슈만 핵심 영역에 반영합니다.
+                카카오뱅크와 금융권에서 전해진 소식입니다. 중요한 변화는 핵심 이슈에서 빠르게 살펴보세요.
               </p>
               <dl className="mt-8 space-y-4 border-t border-slate-200 pt-5 text-sm dark:border-white/10">
                 <div>
-                  <dt className="text-slate-500 dark:text-slate-400">기준 날짜</dt>
+                  <dt className="text-slate-500 dark:text-slate-400">오늘 날짜</dt>
                   <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
                     {formatDate(home.today)}
                   </dd>
                 </div>
                 {home.collection.lastCollectedAt && (
                   <div>
-                    <dt className="text-slate-500 dark:text-slate-400">마지막 수집</dt>
+                    <dt className="text-slate-500 dark:text-slate-400">최근 업데이트</dt>
                     <dd className="mt-1 font-semibold text-slate-900 dark:text-white">
                       {formatDateTime(home.collection.lastCollectedAt)}
                     </dd>
@@ -152,7 +152,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
             </div>
           ) : (
             <div className="mt-6 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
-              이슈별 관련도와 중복 보도를 분석하고 있습니다.
+              오늘의 핵심 이슈는 곧 이곳에서 만나볼 수 있어요. 먼저 최신 기사를 둘러보세요.
             </div>
           )}
         </section>
@@ -192,7 +192,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
                 id="articles-heading"
                 className="mt-2 text-2xl font-[730] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-3xl"
               >
-                최신 기사 탐색
+                오늘 들어온 소식
               </h2>
             </div>
             <Link
@@ -214,7 +214,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
                       {article.title}
                     </h3>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {article.sourceName} · {article.id ? '요약 보기' : '원문만'}
+                      {article.sourceName} · {article.id ? '핵심 내용 보기' : '기사 원문'}
                     </p>
                   </div>
                   <span aria-hidden="true" className="mt-0.5 text-slate-400">
@@ -259,7 +259,7 @@ function IssueCard({
         {cluster.summary}
       </p>
       <div className="mt-5 rounded-2xl bg-slate-50 p-4 dark:bg-black/20">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">영향 근거</p>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">왜 중요한가</p>
         <p className="mt-1.5 text-sm leading-6 text-slate-700 dark:text-slate-200">
           {cluster.impactReason}
         </p>
@@ -288,7 +288,7 @@ function IssueCard({
       {cluster.articles.length > 1 && (
         <details className="mt-4 border-t border-slate-200 pt-4 text-sm dark:border-white/10">
           <summary className="cursor-pointer font-semibold text-slate-600 marker:text-slate-400 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
-            함께 묶인 기사 {cluster.articles.length - 1}건 펼쳐보기
+            관련 기사 {cluster.articles.length - 1}건 함께 보기
           </summary>
           <ul className="mt-3 space-y-2">
             {cluster.articles.slice(1).map((article) => (

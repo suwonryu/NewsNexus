@@ -8,14 +8,14 @@ import {
 } from '../../src/services/briefingArchive';
 
 export const metadata: Metadata = {
-  title: '카카오뱅크 뉴스 브리핑 아카이브',
-  description: '날짜별 카카오뱅크 뉴스 브리핑과 핵심 주제를 모아봅니다.',
+  title: '지난 카카오뱅크 뉴스 브리핑',
+  description: '놓친 카카오뱅크 이슈와 주요 뉴스의 흐름을 날짜별로 다시 살펴보세요.',
   alternates: {
     canonical: '/archive',
   },
   openGraph: {
-    title: '카카오뱅크 뉴스 브리핑 아카이브',
-    description: '생성이 완료된 날짜별 카카오뱅크 뉴스 브리핑을 모아봅니다.',
+    title: '지난 카카오뱅크 뉴스 브리핑',
+    description: '놓친 카카오뱅크 이슈와 주요 뉴스의 흐름을 날짜별로 다시 살펴보세요.',
     url: '/archive',
     siteName: SITE_NAME,
     locale: 'ko_KR',
@@ -46,7 +46,7 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: `카카오뱅크 뉴스 브리핑 아카이브 ${currentPage}페이지`,
+    name: `지난 카카오뱅크 뉴스 브리핑 ${currentPage}페이지`,
     numberOfItems: pageItems.length,
     itemListElement: pageItems.map((item, index) => ({
       '@type': 'ListItem',
@@ -64,66 +64,66 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
       />
       <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
         <div className="site-container">
-        <section className="mt-12">
-          <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">날짜별 브리핑</p>
-          <h1 className="mt-3 text-4xl font-[760] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
-            브리핑 아카이브
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-            생성이 완료된 브리핑을 날짜순으로 제공합니다. 검색 품질 기준은 별도로 적용해
-            각 날짜의 핵심 주제와 카카오뱅크 영향을 이어서 확인할 수 있습니다.
-          </p>
-        </section>
+          <section className="mt-12">
+            <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">날짜별 브리핑</p>
+            <h1 className="mt-3 text-4xl font-[760] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">
+              지난 브리핑
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
+              놓친 이슈를 날짜별로 다시 만나보세요. 카카오뱅크를 둘러싼 변화가 어떻게
+              이어졌는지 한눈에 살펴볼 수 있습니다.
+            </p>
+          </section>
 
-        {groups.length > 0 ? (
-          <div className="mt-12 space-y-12">
-            {groups.map((group) => (
-              <section key={group.month} aria-labelledby={`month-${group.month}`}>
-                <h2
-                  id={`month-${group.month}`}
-                  className="text-xl font-[720] tracking-[-0.025em] text-slate-950 dark:text-white"
-                >
-                  {formatMonth(group.month)}
-                </h2>
-                <ul className="mt-4 divide-y divide-slate-200 overflow-hidden rounded-[24px] border border-slate-200 bg-white/85 shadow-[0_16px_48px_rgba(15,23,42,0.06)] dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.035]">
-                  {group.items.map((item) => (
-                    <li key={item.date}>
-                      <Link
-                        href={`/briefing/${item.date}`}
-                        className="group grid gap-3 px-5 py-5 transition hover:bg-slate-50 dark:hover:bg-white/5 sm:grid-cols-[120px_1fr_auto] sm:items-center sm:px-6"
-                      >
-                        <time
-                          dateTime={item.date}
-                          className="text-sm font-semibold text-[#0066cc] dark:text-[#2997ff]"
+          {groups.length > 0 ? (
+            <div className="mt-12 space-y-12">
+              {groups.map((group) => (
+                <section key={group.month} aria-labelledby={`month-${group.month}`}>
+                  <h2
+                    id={`month-${group.month}`}
+                    className="text-xl font-[720] tracking-[-0.025em] text-slate-950 dark:text-white"
+                  >
+                    {formatMonth(group.month)}
+                  </h2>
+                  <ul className="mt-4 divide-y divide-slate-200 overflow-hidden rounded-[24px] border border-slate-200 bg-white/85 shadow-[0_16px_48px_rgba(15,23,42,0.06)] dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.035]">
+                    {group.items.map((item) => (
+                      <li key={item.date}>
+                        <Link
+                          href={`/briefing/${item.date}`}
+                          className="group grid gap-3 px-5 py-5 transition hover:bg-slate-50 dark:hover:bg-white/5 sm:grid-cols-[120px_1fr_auto] sm:items-center sm:px-6"
                         >
-                          {formatDate(item.date)}
-                        </time>
-                        <div>
-                          <h3 className="font-[650] leading-6 text-slate-950 group-hover:text-[#0066cc] dark:text-white dark:group-hover:text-[#2997ff]">
-                            {item.headline}
-                          </h3>
-                          {item.topicTags.length > 0 && (
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                              {item.topicTags.join(' · ')}
-                            </p>
-                          )}
-                        </div>
-                        <span aria-hidden="true" className="hidden text-slate-400 sm:block">
-                          →
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-            <ArchivePagination currentPage={currentPage} pageCount={pageCount} />
-          </div>
-        ) : (
-          <div className="mt-12 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
-            완료된 브리핑을 불러오고 있습니다.
-          </div>
-        )}
+                          <time
+                            dateTime={item.date}
+                            className="text-sm font-semibold text-[#0066cc] dark:text-[#2997ff]"
+                          >
+                            {formatDate(item.date)}
+                          </time>
+                          <div>
+                            <h3 className="font-[650] leading-6 text-slate-950 group-hover:text-[#0066cc] dark:text-white dark:group-hover:text-[#2997ff]">
+                              {item.headline}
+                            </h3>
+                            {item.topicTags.length > 0 && (
+                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {item.topicTags.join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                          <span aria-hidden="true" className="hidden text-slate-400 sm:block">
+                            →
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+              <ArchivePagination currentPage={currentPage} pageCount={pageCount} />
+            </div>
+          ) : (
+            <div className="mt-12 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
+              아직 둘러볼 수 있는 지난 브리핑이 없어요. 새로운 소식은 오늘 페이지에서 먼저 만나보세요.
+            </div>
+          )}
         </div>
       </main>
     </>
@@ -141,13 +141,13 @@ function ArchivePagination({
     return null;
   }
   return (
-    <nav aria-label="아카이브 페이지" className="flex items-center justify-between gap-4">
+    <nav aria-label="지난 브리핑 페이지" className="flex items-center justify-between gap-4">
       {currentPage > 1 ? (
         <Link
           href={currentPage === 2 ? '/archive' : `/archive?page=${currentPage - 1}`}
           className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
         >
-          ← 이전 24개
+          ← 이전 브리핑
         </Link>
       ) : (
         <span />
@@ -160,7 +160,7 @@ function ArchivePagination({
           href={`/archive?page=${currentPage + 1}`}
           className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
         >
-          다음 24개 →
+          다음 브리핑 →
         </Link>
       ) : (
         <span />
