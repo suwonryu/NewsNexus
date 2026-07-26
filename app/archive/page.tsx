@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SiteHeader } from '../../src/components/SiteHeader';
 import { DEFAULT_OG_IMAGE, SITE_NAME } from '../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../src/lib/siteUrl';
 import {
@@ -64,9 +63,7 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-        <SiteHeader active="briefings" />
-
+        <div className="site-container">
         <section className="mt-12">
           <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">날짜별 브리핑</p>
           <h1 className="mt-3 text-4xl font-[760] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SiteHeader } from '../../../src/components/SiteHeader';
 import { DEFAULT_OG_IMAGE, SITE_NAME } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import { getTopic } from '../../../src/services/topics';
@@ -102,9 +101,7 @@ export default async function TopicPage({ params, searchParams }: TopicPageProps
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <SiteHeader active="briefings" />
-
+        <div className="site-container">
           <section className="mt-12 rounded-[30px] border border-white/70 bg-white/90 p-7 shadow-[0_24px_80px_rgba(15,23,42,0.1)] dark:border-white/10 dark:bg-[#18181a]/90 sm:p-10">
             <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">누적 주제 분석</p>
             <h1 className="mt-3 text-4xl font-[760] tracking-[-0.045em] text-slate-950 dark:text-white sm:text-5xl">

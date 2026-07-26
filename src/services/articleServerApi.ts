@@ -110,7 +110,12 @@ export async function getDailyBriefing(
   try {
     const response = await getJson<DailyBriefingResponse>(
       `${KABANG_BRIEFING_API_BASE}/${date}?enqueue=${enqueue}`,
-      { cache: 'no-store' },
+      enqueue
+        ? { cache: 'no-store', signal: AbortSignal.timeout(5_000) }
+        : {
+            next: { revalidate: REVALIDATE_SECONDS },
+            signal: AbortSignal.timeout(5_000),
+          },
     );
 
     return normalizeDailyBriefingResponse(response, date);

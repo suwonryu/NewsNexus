@@ -5,7 +5,6 @@ import Link from 'next/link';
 import MainMenu from './components/MainMenu';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
-import { SiteHeader } from './components/SiteHeader';
 import {
   fetchArticleDetail,
   fetchArticlesByDate,
@@ -709,9 +708,7 @@ function App({
   }, [isDateSheetOpen]);
 
   return (
-    <div className="mobile-app-shell md:min-h-screen md:p-6">
-      <SiteHeader active="explore" />
-
+    <div className="mobile-app-shell mx-auto max-w-[1320px] md:min-h-screen md:px-8 md:pb-6 md:pt-5">
       <section className="my-3 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

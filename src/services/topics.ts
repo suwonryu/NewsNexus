@@ -75,7 +75,8 @@ function normalizeTopic(value: unknown): NewsTopic | null {
         .map((item) => {
           const classificationConfidence = getTopicConfidence(
             raw.slug!,
-            `${item.issueTitle} ${item.issueSummary}`,
+            item.issueTitle,
+            item.issueSummary,
           );
           return {
             ...item,

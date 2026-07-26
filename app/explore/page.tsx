@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import App from '../../src/App';
-import { SiteHeader } from '../../src/components/SiteHeader';
 import { getKoreaIsoDate } from '../../src/lib/koreaDate';
 import { getArticlesByDate, getDateTree } from '../../src/services/articleServerApi';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../src/services/home';
@@ -72,9 +71,7 @@ function IssueExplorer({
 }) {
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <SiteHeader active="explore" />
-
+      <div className="site-container">
         <section className="mt-8 rounded-[26px] border border-slate-200 bg-white/85 p-5 shadow-[0_16px_48px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/[0.035]">
           <div className="mb-5">
             <p className="text-sm font-semibold text-[#0071e3] dark:text-[#2997ff]">탐색</p>

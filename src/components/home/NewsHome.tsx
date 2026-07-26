@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { ArticleListItem } from '../../types/article';
 import type { BankImpact, HomeData, HomeIssueCluster } from '../../services/home';
 import { getTopicDisplayName } from '../../services/contentQuality';
-import { SiteHeader } from '../SiteHeader';
 
 interface NewsHomeProps {
   home: HomeData;
@@ -30,9 +29,7 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
 
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <SiteHeader active="today" />
-
+      <div className="site-container">
         <section className="mt-8 overflow-hidden rounded-[30px] border border-white/70 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.1)] backdrop-blur dark:border-white/10 dark:bg-[#18181a]/90 dark:shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
           <div className="grid gap-0 lg:grid-cols-[1.5fr_0.5fr]">
             <div className="p-6 sm:p-9 lg:p-11">

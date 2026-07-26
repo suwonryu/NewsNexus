@@ -1,6 +1,6 @@
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getDailyBriefing } from './articleServerApi';
-import { normalizeEditorialText } from './contentQuality';
+import { getTopicDisplayName, normalizeEditorialText } from './contentQuality';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -128,7 +128,10 @@ function normalizeItem(value: Partial<BriefingArchiveItem>): BriefingArchiveItem
     summary:
       typeof value.summary === 'string' ? normalizeEditorialText(value.summary, 3) : '',
     topicTags: Array.isArray(value.topicTags)
-      ? value.topicTags.filter((tag): tag is string => typeof tag === 'string').slice(0, 3)
+      ? value.topicTags
+          .filter((tag): tag is string => typeof tag === 'string')
+          .map(getTopicDisplayName)
+          .slice(0, 3)
       : [],
     publishedAt: typeof value.publishedAt === 'string' ? value.publishedAt : null,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null,

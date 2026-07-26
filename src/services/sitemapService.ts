@@ -1,6 +1,5 @@
 import { unstable_cache } from 'next/cache';
 import { getAllReadyBriefings } from './briefingArchive';
-import { getDailyBriefing } from './articleServerApi';
 import { evaluateBriefingQuality } from './contentQuality';
 import { getPublishedTopics } from './topics';
 
@@ -46,7 +45,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v3'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v4'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
@@ -61,56 +60,21 @@ export async function getSitemapChunkCount(): Promise<number> {
 
 async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
   const briefings = await getAllReadyBriefings();
-  const qualityChecked = await mapWithConcurrency(briefings, 8, async (briefing) => {
-    const detail = await getDailyBriefing(briefing.date, { enqueue: false });
-    if (detail.status !== 'READY' || !detail.summary) {
-      return null;
-    }
-    const uniqueSourceCount =
-      detail.uniqueSourceCount ??
-      new Set(detail.featuredArticles.map((article) => article.sourceName)).size;
-    const quality = evaluateBriefingQuality({
+  return briefings
+    .filter((briefing) => evaluateBriefingQuality({
       headline: briefing.headline,
-      summary: detail.summary,
-      articleCount: detail.articleCount,
-      unrelatedArticleCount: detail.sentimentSummary.unrelatedCount,
-      relevantArticleRatio: detail.relevantArticleRatio,
-      representativeArticleCount:
-        detail.representativeArticleCount ?? detail.featuredArticles.length,
-      uniqueSourceCount,
-      qualityScore: detail.qualityScore,
-    });
-    return quality.passes ? briefing : null;
-  });
-
-  return qualityChecked.filter(isReadyBriefing).map((briefing) => ({
+      summary: briefing.summary,
+      relevantArticleRatio: briefing.relevantArticleRatio,
+      representativeArticleCount: briefing.representativeArticleCount,
+      uniqueSourceCount: briefing.uniqueSourceCount,
+      qualityScore: briefing.qualityScore,
+    }).passes)
+    .map((briefing) => ({
       path: `/briefing/${briefing.date}`,
       lastModified: normalizeLastModified(briefing.updatedAt ?? briefing.publishedAt ?? briefing.date),
       changeFrequency: 'daily',
       priority: '0.8',
     }));
-}
-
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let cursor = 0;
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (cursor < items.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await mapper(items[index]);
-    }
-  });
-  await Promise.all(workers);
-  return results;
-}
-
-function isReadyBriefing<T>(value: T | null): value is T {
-  return value !== null;
 }
 
 function readIntEnv(name: string, fallback: number, min: number, max: number): number {

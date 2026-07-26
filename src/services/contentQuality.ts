@@ -43,9 +43,18 @@ export const TOPIC_RULES = {
   },
   labor: {
     title: '노사·인력',
-    requiredAny: ['노조', '파업', '임금', '인력', '채용', '노사', '노동', '성과급', '고용'],
-    strongPhrases: ['전면 파업', '임금 교섭', '노사 협상', '인력 채용'],
-    excludedContext: ['가상자산', '자금세탁', '예금상품', '스테이블코인', '퀴즈'],
+    requiredAny: [
+      '노조', '파업', '임금', '인력', '채용', '노사', '노동', '성과급', '고용',
+      '임단협', '쟁의', '단체협약',
+    ],
+    strongPhrases: [
+      '전면 파업', '전면파업', '임금 교섭', '노사 협상', '인력 채용',
+      '피켓 시위', '쟁의권', '임단협', '단체행동',
+    ],
+    excludedContext: [
+      '가상자산', '자금세탁', '예금상품', '스테이블코인', '퀴즈',
+      '소상공인 지원', '특례보증', '채용 지원금', '일자리 창출',
+    ],
     minimumConfidence: 0.75,
   },
   global: {
@@ -126,14 +135,19 @@ export function getTopicDisplayName(slugOrLabel: string): string {
   return TOPIC_RULES[normalized]?.title ?? formatEnumLabel(slugOrLabel);
 }
 
-export function getTopicConfidence(slug: string, text: string): number {
+export function getTopicConfidence(slug: string, title: string, summary = ''): number {
   const rule = TOPIC_RULES[slug as TopicSlug];
+  const text = `${title} ${summary}`.trim();
   if (!rule || !text.trim()) {
     return 0;
   }
 
   const normalized = text.toLowerCase();
   if (rule.excludedContext.some((keyword) => normalized.includes(keyword.toLowerCase()))) {
+    return 0;
+  }
+
+  if (slug === 'labor' && !hasCoherentLaborContext(title, summary)) {
     return 0;
   }
 
@@ -220,9 +234,25 @@ function isRelevantSentence(sentence: string): boolean {
 
 function splitSentences(value: string): string[] {
   return value
-    .split(/(?<=[.!?다요음됨임])\s+(?=[가-힣A-Z0-9"'‘“])/)
+    .split(/(?<=[.!?。])\s+(?=[가-힣A-Z0-9"'‘“])/)
     .map((sentence) => sentence.trim())
     .filter(Boolean);
+}
+
+function hasCoherentLaborContext(title: string, summary: string): boolean {
+  const normalizedTitle = title.toLowerCase();
+  const normalizedSummary = summary.toLowerCase();
+  const coreSignals = [
+    '노조', '파업', '임금', '노사', '노동', '성과급', '임단협', '쟁의', '단체협약',
+  ];
+  const staffingSignals = ['인력', '채용', '고용'];
+  const titleCoreCount = coreSignals.filter((signal) => normalizedTitle.includes(signal)).length;
+  const summaryHasCore = coreSignals.some((signal) => normalizedSummary.includes(signal));
+  if (titleCoreCount > 0) {
+    return summaryHasCore || titleCoreCount >= 2;
+  }
+  const titleHasStaffing = staffingSignals.some((signal) => normalizedTitle.includes(signal));
+  return titleHasStaffing && (DIRECT_BANK_PATTERN.test(summary) || BANK_INDUSTRY_PATTERN.test(title));
 }
 
 function ensureSentenceEnding(value: string): string {

@@ -213,7 +213,7 @@ function buildFallbackClusters(
 }
 
 async function enhanceHomeEditorialData(home: HomeData): Promise<HomeData> {
-  const briefing = home.latestReadyBriefing;
+  const briefing = await resolveLatestReadyBriefing(home.latestReadyBriefing);
   if (!briefing) {
     return home;
   }
@@ -260,6 +260,38 @@ async function enhanceHomeEditorialData(home: HomeData): Promise<HomeData> {
       },
     };
   }
+}
+
+async function resolveLatestReadyBriefing(
+  current: HomeData['latestReadyBriefing'],
+): Promise<HomeData['latestReadyBriefing']> {
+  const latestCompletedDate = getKoreaIsoDateWithOffset(1);
+  if (current && current.date >= latestCompletedDate) {
+    return current;
+  }
+
+  for (let dayOffset = 1; dayOffset <= 7; dayOffset += 1) {
+    const date = getKoreaIsoDateWithOffset(dayOffset);
+    if (current && date <= current.date) {
+      break;
+    }
+    const briefing = await getDailyBriefing(date, { enqueue: false });
+    if (briefing.status !== 'READY' || !briefing.summary) {
+      continue;
+    }
+    const topicTags = briefing.keywords.slice(0, 5);
+    return {
+      date,
+      displayHeadline:
+        briefing.editorialAnalysis?.keyChanges?.[0] ??
+        topicTags.slice(0, 3).join(' · ') ??
+        `${date} 카카오뱅크 뉴스 브리핑`,
+      displaySummary: normalizeEditorialText(briefing.summary, 3),
+      topicTags,
+      updatedAt: briefing.generatedAt ?? `${date}T00:00:00+09:00`,
+    };
+  }
+  return current;
 }
 
 async function safeGetArticles(date: string, size = 20): Promise<ArticleListResponse> {

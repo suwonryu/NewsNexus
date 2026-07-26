@@ -1,6 +1,7 @@
 import localFont from 'next/font/local';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { SiteHeader } from '../src/components/SiteHeader';
 import { ThemeProvider } from '../src/components/ThemeProvider';
 import { WebVitalsReporter } from '../src/components/WebVitalsReporter';
 import {
@@ -80,6 +81,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitializerScript }} />
         <ThemeProvider>
           <WebVitalsReporter />
+          <div className="site-header-shell">
+            <div className="site-container">
+              <SiteHeader />
+            </div>
+          </div>
           {children}
         </ThemeProvider>
       </body>

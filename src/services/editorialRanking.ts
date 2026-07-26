@@ -236,9 +236,13 @@ function buildImpactReason(
   articleCount: number,
   sourceCount: number,
 ): string {
-  const normalized = normalizeEditorialText(issue.impactReason, 2)
-    .replace(/^\d+개 매체의 \d+건 보도를 기준으로\s*/u, '')
-    .replace(/^1개 매체의 1건 보도를 기준으로\s*/u, '');
+  const normalized = normalizeEditorialText(issue.impactReason, 3)
+    .replace(
+      /^(?:\d+개 매체의 \d+건 보도를 (?:기준으로\s*|종합했습니다\.\s*))+/u,
+      '',
+    )
+    .replace(/\s*주요 점검 영역은 .*?입니다\.?$/u, '')
+    .trim();
   if (articleCount <= 1) {
     return normalized;
   }

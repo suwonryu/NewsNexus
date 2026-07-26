@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
-import { SiteHeader } from '../../../src/components/SiteHeader';
 import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
 import {
   DEFAULT_OG_IMAGE,
@@ -140,8 +139,7 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
-        <div className="mx-auto max-w-[1320px]">
-          <SiteHeader active="briefings" className="mb-4" />
+        <div className="site-container">
           <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
@@ -529,8 +527,7 @@ async function PreparingBriefingState({
 
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
-      <div className="mx-auto max-w-[1120px]">
-        <SiteHeader active="briefings" className="mb-4" />
+      <div className="site-container">
         <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"
@@ -611,8 +608,7 @@ function NotFoundBriefingState({
 }) {
   return (
     <div className="min-h-screen px-4 py-5 md:px-6 md:py-6">
-      <div className="mx-auto max-w-[1120px]">
-        <SiteHeader active="briefings" className="mb-4" />
+      <div className="site-container">
         <BriefingHeader
           desktopEyebrow="Daily Briefing"
           mobileEyebrow="오늘의 카카오뱅크"

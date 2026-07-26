@@ -39,9 +39,52 @@ body {
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-1) 100%);
 }
 
+.site-container {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.site-header-shell {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0
+    max(1rem, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg-1) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.site-route-progress {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  width: 72%;
+  height: 3px;
+  transform-origin: left;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(90deg, #0071e3, #5ac8fa);
+  box-shadow: 0 0 14px rgba(0, 113, 227, 0.38);
+  animation: site-route-progress 6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
 html.dark body {
   background:
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-1) 100%);
+}
+
+@keyframes site-route-progress {
+  from {
+    opacity: 0.75;
+    transform: scaleX(0.08);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 #root {
@@ -102,6 +145,7 @@ html.dark body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-route-progress,
   .briefing-fade-in-up,
   .briefing-donut,
   .briefing-donut-segment {
@@ -130,5 +174,19 @@ html.dark body {
 
   .mobile-bottom-sheet {
     padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+  }
+}
+
+@media (min-width: 640px) {
+  .site-header-shell {
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-header-shell {
+    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-left: max(2rem, env(safe-area-inset-left));
   }
 }
