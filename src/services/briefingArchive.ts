@@ -5,6 +5,7 @@ import { getTopicDisplayName, normalizeEditorialText } from './contentQuality';
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
 const MIN_PRIMARY_ARCHIVE_ITEMS = 20;
+const RECENT_ARCHIVE_LOOKBACK_DAYS = 7;
 
 export interface BriefingArchiveItem {
   date: string;
@@ -44,7 +45,8 @@ export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchi
       .map(normalizeItem)
       .filter(isArchiveItem);
     if (items.length >= MIN_PRIMARY_ARCHIVE_ITEMS) {
-      return sortItems(items);
+      const recentItems = await buildCompatibilityArchive(RECENT_ARCHIVE_LOOKBACK_DAYS);
+      return sortItems(mergeByDate(items, recentItems));
     }
     const compatibilityItems = await buildCompatibilityArchive();
     return sortItems(mergeByDate(items, compatibilityItems));
@@ -76,8 +78,8 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
   return buildCompatibilityArchive();
 }
 
-async function buildCompatibilityArchive(): Promise<BriefingArchiveItem[]> {
-  const dayOffsets = Array.from({ length: 30 }, (_, index) => index + 1);
+async function buildCompatibilityArchive(dayCount = 30): Promise<BriefingArchiveItem[]> {
+  const dayOffsets = Array.from({ length: dayCount }, (_, index) => index + 1);
   const items = await mapWithConcurrency<number, BriefingArchiveItem | null>(
     dayOffsets,
     6,
