@@ -1,8 +1,14 @@
 import { unstable_cache } from 'next/cache';
+import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
+import { getArticleDetail, getDailyBriefing } from './articleServerApi';
 import { getAllReadyBriefings } from './briefingArchive';
-import { evaluateBriefingQuality } from './contentQuality';
+import {
+  evaluateArticleIndexEligibility,
+  evaluateBriefingQuality,
+} from './contentQuality';
 import { getPublishedTopics } from './topics';
 
+const ARTICLE_SITEMAP_LOOKBACK_DAYS = 14;
 export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
 export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
   'SITEMAP_REVALIDATE_SECONDS',
@@ -33,6 +39,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
     priority: '0.9',
   });
   entries.push(...(await getReadyBriefingSitemapEntries()));
+  entries.push(...(await getIndexableArticleSitemapEntries()));
   entries.push(
     ...(await getPublishedTopics()).map((topic) => ({
       path: `/topics/${topic.slug}`,
@@ -45,12 +52,69 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v4'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v5'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
 export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   return getCachedSitemapEntries();
+}
+
+async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
+  const dates = Array.from(
+    { length: ARTICLE_SITEMAP_LOOKBACK_DAYS },
+    (_, dayOffset) => getKoreaIsoDateWithOffset(dayOffset),
+  );
+  const briefings = await mapWithConcurrency(dates, 4, (date) =>
+    getDailyBriefing(date, { enqueue: false }),
+  );
+  const candidateDates = new Map<number, string>();
+
+  for (const briefing of briefings) {
+    if (briefing.status !== 'READY') {
+      continue;
+    }
+    for (const article of briefing.featuredArticles.slice(0, 5)) {
+      if (article.id !== null && !candidateDates.has(article.id)) {
+        candidateDates.set(article.id, briefing.date);
+      }
+    }
+  }
+
+  const articles = await mapWithConcurrency([...candidateDates.keys()], 6, getArticleDetail);
+  const representatives = new Map<string, NonNullable<(typeof articles)[number]>>();
+
+  for (const article of articles) {
+    if (
+      !article ||
+      !evaluateArticleIndexEligibility({
+        ...article,
+        isEditorialRepresentative: true,
+      }).passes
+    ) {
+      continue;
+    }
+    const clusterKey = article.analysis?.clusterId ?? String(article.id);
+    const current = representatives.get(clusterKey);
+    if (
+      !current ||
+      (article.analysis?.editorialPriority ?? 0) >
+        (current.analysis?.editorialPriority ?? 0)
+    ) {
+      representatives.set(clusterKey, article);
+    }
+  }
+
+  return [...representatives.values()]
+    .sort((left, right) => right.id - left.id)
+    .map((article) => ({
+      path: `/news/${article.id}`,
+      lastModified: normalizeLastModified(
+        article.publishedDate ?? candidateDates.get(article.id),
+      ),
+      changeFrequency: 'daily',
+      priority: '0.7',
+    }));
 }
 
 export async function getSitemapChunkCount(): Promise<number> {
@@ -113,4 +177,22 @@ function normalizeLastModified(value: string | undefined): string | null {
   }
 
   return parsed.toISOString();
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await mapper(items[index]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }

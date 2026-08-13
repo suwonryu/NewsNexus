@@ -8,10 +8,12 @@ import {
   SITE_NAME,
 } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
+import { evaluateArticleIndexEligibility } from '../../../src/services/contentQuality';
 import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
 import {
   getArticleDetail,
   getArticlesByDate,
+  getDailyBriefing,
   getDateTree,
 } from '../../../src/services/articleServerApi';
 
@@ -73,7 +75,10 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
   const description = getDescription(article.summary);
   const canonical = `${siteUrl}/news/${parsedId}`;
-  const summaryTitle = `${article.title} | 요약`;
+  const eligibility = await getArticleIndexEligibility(article);
+  const summaryTitle = eligibility.passes
+    ? `${article.title} | 카카오뱅크 영향 분석`
+    : `${article.title} | 요약`;
 
   return {
     title: summaryTitle,
@@ -82,7 +87,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       canonical,
     },
     robots: {
-      index: false,
+      index: eligibility.passes,
       follow: true,
     },
     openGraph: {
@@ -121,16 +126,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   );
   const siteUrl = getSiteUrl();
   const canonical = `${siteUrl}/news/${parsedId}`;
+  const eligibility = await getArticleIndexEligibility(article);
+  const pageName = eligibility.passes
+    ? `${article.title} | 카카오뱅크 영향 분석`
+    : `${article.title} 요약`;
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: `${article.title} 요약`,
+    name: pageName,
     description: getDescription(article.summary),
     url: canonical,
     inLanguage: 'ko',
     mainEntity: {
       '@type': 'Article',
-      headline: `${article.title} 요약`,
+      headline: pageName,
+      abstract: article.summary,
       datePublished: article.publishedDate ?? selectedDate,
       dateModified: article.publishedDate ?? selectedDate,
       author: {
@@ -141,6 +151,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         '@type': 'Organization',
         name: '오늘의 카카오뱅크',
       },
+      about: article.analysis?.matchedEntities.map((name) => ({
+        '@type': 'Thing',
+        name,
+      })),
+      citation: article.link,
       isBasedOn: article.link,
       url: canonical,
     },
@@ -177,6 +192,26 @@ function getDescription(summary: string | null): string {
   }
 
   return normalized.slice(0, 160);
+}
+
+async function getArticleIndexEligibility(article: ArticleDetail) {
+  const publishedDate = normalizeToIsoDate(article.publishedDate);
+  if (!publishedDate) {
+    return evaluateArticleIndexEligibility({
+      ...article,
+      isEditorialRepresentative: false,
+    });
+  }
+
+  const briefing = await getDailyBriefing(publishedDate, { enqueue: false });
+  const isEditorialRepresentative =
+    briefing.status === 'READY' &&
+    briefing.featuredArticles.some((candidate) => candidate.id === article.id);
+
+  return evaluateArticleIndexEligibility({
+    ...article,
+    isEditorialRepresentative,
+  });
 }
 
 function buildArticleOpenGraph({
