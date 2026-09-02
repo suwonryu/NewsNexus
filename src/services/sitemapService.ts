@@ -2,10 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getArticleDetail, getDailyBriefing } from './articleServerApi';
 import { getAllReadyBriefings } from './briefingArchive';
-import {
-  evaluateArticleIndexEligibility,
-  evaluateBriefingQuality,
-} from './contentQuality';
+import { evaluateArticleIndexEligibility } from './contentQuality';
 import { getPublishedTopics } from './topics';
 
 const ARTICLE_SITEMAP_LOOKBACK_DAYS = 14;
@@ -52,7 +49,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v5'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v6'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
@@ -87,10 +84,7 @@ async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
   for (const article of articles) {
     if (
       !article ||
-      !evaluateArticleIndexEligibility({
-        ...article,
-        isEditorialRepresentative: true,
-      }).passes
+      !evaluateArticleIndexEligibility(article).passes
     ) {
       continue;
     }
@@ -125,14 +119,7 @@ export async function getSitemapChunkCount(): Promise<number> {
 async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
   const briefings = await getAllReadyBriefings();
   return briefings
-    .filter((briefing) => evaluateBriefingQuality({
-      headline: briefing.headline,
-      summary: briefing.summary,
-      relevantArticleRatio: briefing.relevantArticleRatio,
-      representativeArticleCount: briefing.representativeArticleCount,
-      uniqueSourceCount: briefing.uniqueSourceCount,
-      qualityScore: briefing.qualityScore,
-    }).passes)
+    .filter((briefing) => briefing.summary.trim().length > 0)
     .map((briefing) => ({
       path: `/briefing/${briefing.date}`,
       lastModified: normalizeLastModified(briefing.updatedAt ?? briefing.publishedAt ?? briefing.date),

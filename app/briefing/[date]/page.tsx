@@ -14,10 +14,7 @@ import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
 import { getBriefingArchive } from '../../../src/services/briefingArchive';
-import {
-  evaluateBriefingQuality,
-  normalizeEditorialText,
-} from '../../../src/services/contentQuality';
+import { normalizeEditorialText } from '../../../src/services/contentQuality';
 import { getPublishedTopics } from '../../../src/services/topics';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
 import type { IsoDate } from '../../../src/types/article';
@@ -90,13 +87,13 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
   const description = getMetaDescription(briefing.summary);
   const topicTitle = briefing.keywords.slice(0, 3).join('·') || '주요 이슈';
   const briefingTitle = `카카오뱅크 뉴스 브리핑 | ${topicTitle} | ${date}`;
-  const quality = getBriefingQuality(briefing);
+  const hasPublishedContent = Boolean(briefing.summary?.trim());
 
   return {
     title: briefingTitle,
     description,
     alternates: { canonical },
-    robots: { index: quality.passes, follow: true },
+    robots: { index: hasPublishedContent, follow: true },
     openGraph: {
       ...buildBriefingOpenGraph({
         title: briefingTitle,
@@ -787,21 +784,4 @@ function getBriefingDisplayHeadline(briefing: DailyBriefingResponse): string {
   }
   const topics = briefing.keywords.slice(0, 3).join('·');
   return topics ? `${topics} 흐름과 카카오뱅크 영향` : '주요 이슈와 카카오뱅크 영향';
-}
-
-function getBriefingQuality(briefing: DailyBriefingResponse) {
-  const uniqueSourceCount =
-    briefing.uniqueSourceCount ??
-    new Set(briefing.featuredArticles.map((article) => article.sourceName)).size;
-  return evaluateBriefingQuality({
-    headline: getBriefingDisplayHeadline(briefing),
-    summary: briefing.summary ?? '',
-    articleCount: briefing.articleCount,
-    unrelatedArticleCount: briefing.sentimentSummary.unrelatedCount,
-    relevantArticleRatio: briefing.relevantArticleRatio,
-    representativeArticleCount:
-      briefing.representativeArticleCount ?? briefing.featuredArticles.length,
-    uniqueSourceCount,
-    qualityScore: briefing.qualityScore,
-  });
 }

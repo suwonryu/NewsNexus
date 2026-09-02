@@ -103,21 +103,12 @@ export interface BriefingQualityResult {
 }
 
 export interface ArticleIndexEligibilityInput {
-  id: number;
   title: string;
   summary: string | null;
-  isEditorialRepresentative?: boolean;
   analysis?: {
     relevanceLevel: 'DIRECT' | 'INDUSTRY' | 'IRRELEVANT';
     relevanceConfidence: number;
     relevanceReason: string;
-    editorialPriority?: number;
-    coreEligible?: boolean;
-    exclusionReason?: string | null;
-    impact: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;
-    impactConfidence: number;
-    impactReason: string | null;
-    evidenceArticleIds: number[];
   } | null;
 }
 
@@ -143,46 +134,19 @@ export function evaluateArticleIndexEligibility(
   if (normalizedSummary.length < 120 || splitSentences(normalizedSummary).length < 2) {
     reasons.push('충분한 고유 요약 없음');
   }
-  if (input.isEditorialRepresentative !== true) {
-    reasons.push('일일 브리핑 대표 기사 아님');
-  }
   if (!analysis) {
     reasons.push('자체 영향 분석 없음');
     return { passes: false, reasons };
   }
-  if (analysis.coreEligible !== true) {
-    reasons.push('핵심 기사 대상 아님');
-  }
   if (
-    analysis.relevanceLevel !== 'DIRECT' ||
-    (analysis.relevanceConfidence ?? 0) < 0.85
+    analysis.relevanceLevel === 'IRRELEVANT' ||
+    (analysis.relevanceConfidence ?? 0) < 0.65
   ) {
-    reasons.push('카카오뱅크 직접 관련성 부족');
-  }
-  if (analysis.exclusionReason) {
-    reasons.push('제외 사유 존재');
-  }
-  if ((analysis.editorialPriority ?? 0) < 0.15) {
-    reasons.push('편집 우선순위 기준 미달');
+    reasons.push('카카오뱅크 관련성 부족');
   }
   if ((analysis.relevanceReason ?? '').trim().length < 20) {
     reasons.push('직접 관련성 설명 부족');
   }
-  if (
-    !analysis.impact ||
-    (analysis.impactConfidence ?? 0) < 0.65 ||
-    !analysis.impactReason ||
-    analysis.impactReason.trim().length < 40 ||
-    /방향을 단정할 직접 근거는 제한적|영향은 아직 뚜렷하지/.test(analysis.impactReason)
-  ) {
-    reasons.push('구체적인 영향 분석 부족');
-  }
-
-  const representativeId = analysis.evidenceArticleIds?.[0];
-  if (representativeId !== undefined && representativeId !== input.id) {
-    reasons.push('동일 이슈의 대표 기사 아님');
-  }
-
   return { passes: reasons.length === 0, reasons };
 }
 

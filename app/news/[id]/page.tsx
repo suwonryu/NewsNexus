@@ -13,7 +13,6 @@ import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types
 import {
   getArticleDetail,
   getArticlesByDate,
-  getDailyBriefing,
   getDateTree,
 } from '../../../src/services/articleServerApi';
 
@@ -75,7 +74,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
   const description = getDescription(article.summary);
   const canonical = `${siteUrl}/news/${parsedId}`;
-  const eligibility = await getArticleIndexEligibility(article);
+  const eligibility = evaluateArticleIndexEligibility(article);
   const summaryTitle = eligibility.passes
     ? `${article.title} | 카카오뱅크 영향 분석`
     : `${article.title} | 요약`;
@@ -126,7 +125,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   );
   const siteUrl = getSiteUrl();
   const canonical = `${siteUrl}/news/${parsedId}`;
-  const eligibility = await getArticleIndexEligibility(article);
+  const eligibility = evaluateArticleIndexEligibility(article);
   const pageName = eligibility.passes
     ? `${article.title} | 카카오뱅크 영향 분석`
     : `${article.title} 요약`;
@@ -192,26 +191,6 @@ function getDescription(summary: string | null): string {
   }
 
   return normalized.slice(0, 160);
-}
-
-async function getArticleIndexEligibility(article: ArticleDetail) {
-  const publishedDate = normalizeToIsoDate(article.publishedDate);
-  if (!publishedDate) {
-    return evaluateArticleIndexEligibility({
-      ...article,
-      isEditorialRepresentative: false,
-    });
-  }
-
-  const briefing = await getDailyBriefing(publishedDate, { enqueue: false });
-  const isEditorialRepresentative =
-    briefing.status === 'READY' &&
-    briefing.featuredArticles.some((candidate) => candidate.id === article.id);
-
-  return evaluateArticleIndexEligibility({
-    ...article,
-    isEditorialRepresentative,
-  });
 }
 
 function buildArticleOpenGraph({
