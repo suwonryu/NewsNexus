@@ -1,6 +1,10 @@
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getDailyBriefing } from './articleServerApi';
-import { getTopicDisplayName, normalizeEditorialText } from './contentQuality';
+import {
+  alignEditorialSummary,
+  getTopicDisplayName,
+  normalizeEditorialText,
+} from './contentQuality';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -89,13 +93,14 @@ async function buildCompatibilityArchive(dayCount = 30): Promise<BriefingArchive
       if (briefing.status !== 'READY' || !briefing.summary) {
         return null;
       }
+      const headline =
+        briefing.editorialAnalysis?.keyChanges?.[0] ||
+        briefing.keywords.slice(0, 3).join(' · ') ||
+        `${date} 카카오뱅크 뉴스 브리핑`;
       return {
         date,
-        headline:
-          briefing.editorialAnalysis?.keyChanges?.[0] ||
-          briefing.keywords.slice(0, 3).join(' · ') ||
-          `${date} 카카오뱅크 뉴스 브리핑`,
-        summary: normalizeEditorialText(briefing.summary, 3),
+        headline,
+        summary: alignEditorialSummary(headline, briefing.summary, 3),
         topicTags: briefing.keywords.slice(0, 3),
         publishedAt: briefing.generatedAt,
         updatedAt: briefing.generatedAt,
@@ -121,14 +126,15 @@ function normalizeItem(value: Partial<BriefingArchiveItem>): BriefingArchiveItem
   if (typeof value.date !== 'string') {
     return null;
   }
+  const headline =
+    typeof value.headline === 'string' && value.headline.trim()
+      ? value.headline.trim()
+      : `${value.date} 카카오뱅크 뉴스 브리핑`;
   return {
     date: value.date,
-    headline:
-      typeof value.headline === 'string' && value.headline.trim()
-        ? value.headline.trim()
-        : `${value.date} 카카오뱅크 뉴스 브리핑`,
+    headline,
     summary:
-      typeof value.summary === 'string' ? normalizeEditorialText(value.summary, 3) : '',
+      typeof value.summary === 'string' ? alignEditorialSummary(headline, value.summary, 3) : '',
     topicTags: Array.isArray(value.topicTags)
       ? value.topicTags
           .filter((tag): tag is string => typeof tag === 'string')

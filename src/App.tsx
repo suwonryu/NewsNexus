@@ -713,9 +713,12 @@ function App({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-[#0071e3] dark:text-[#2997ff]">탐색</p>
-            <h1 className="mt-1 text-lg font-[680] text-slate-950 dark:text-white md:text-xl">
+            <h1
+              className="mt-1 max-w-3xl text-lg font-[680] text-slate-950 dark:text-white md:text-xl"
+              title={articleDetail?.title ?? pendingArticle?.title ?? undefined}
+            >
               {selectedArticleId !== null || pendingArticle
-                ? '기사 상세'
+                ? articleDetail?.title ?? pendingArticle?.title ?? '기사 상세'
                 : '기사별 보기'}
             </h1>
           </div>

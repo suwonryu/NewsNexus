@@ -30,13 +30,34 @@ body {
   margin: 0;
   min-height: 100%;
   color: var(--ink-1);
-  font-family: var(--font-pretendard), 'Noto Sans KR', 'Segoe UI', sans-serif;
+  font-family:
+    Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Segoe UI', sans-serif;
   font-weight: 420;
   transition:
     background-color 300ms ease,
     color 300ms ease;
   background:
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 42%, var(--bg-1) 100%);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-160%);
+  border-radius: 999px;
+  background: #0071e3;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .site-container {

@@ -80,6 +80,14 @@ export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHome
                     브리핑 전체 보기
                   </Link>
                 )}
+                {isPreparing && (
+                  <Link
+                    href={`/explore?date=${home.today}`}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#0071e3] px-5 py-2.5 text-sm font-semibold text-[#0066cc] transition hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:border-[#2997ff] dark:text-[#2997ff] dark:hover:bg-blue-500/10"
+                  >
+                    오늘 이슈 먼저 보기
+                  </Link>
+                )}
                 <Link
                   href="/archive"
                   className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:border-white/20 dark:text-slate-200 dark:hover:bg-white/5"
@@ -259,7 +267,14 @@ function IssueCard({
         {cluster.summary}
       </p>
       <div className="mt-5 rounded-2xl bg-slate-50 p-4 dark:bg-black/20">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">왜 중요한가</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">왜 중요한가</p>
+          {cluster.impactConfidence > 0 && (
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              분석 신뢰도 {Math.round(cluster.impactConfidence * 100)}%
+            </p>
+          )}
+        </div>
         <p className="mt-1.5 text-sm leading-6 text-slate-700 dark:text-slate-200">
           {cluster.impactReason}
         </p>

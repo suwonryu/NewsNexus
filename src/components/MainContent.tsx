@@ -178,7 +178,7 @@ function MainContent({
     return (
       <main className={containerClassName}>
         <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Article Detail</p>
-        <h1 className="mb-2 text-3xl font-[650] text-slate-900 dark:text-slate-50">{pendingArticle.title}</h1>
+        <h2 className="mb-2 text-3xl font-[650] text-slate-900 dark:text-slate-50">{pendingArticle.title}</h2>
         <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">핵심 내용을 불러오고 있어요.</p>
         <div className="mt-4 space-y-2 animate-pulse">
           <div className="h-4 w-full rounded bg-slate-200 dark:bg-slate-800" />
@@ -218,9 +218,9 @@ function MainContent({
     <main className={containerClassName}>
       <p className="mb-2 text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Article Detail</p>
       <div className="mb-2 flex items-start justify-between gap-3">
-        <h1 className="min-w-0 flex-1 text-3xl font-[650] text-slate-900 dark:text-slate-50">
+        <h2 className="min-w-0 flex-1 text-3xl font-[650] text-slate-900 dark:text-slate-50">
           {articleDetail.title}
-        </h1>
+        </h2>
         <button
           type="button"
           onClick={handleShare}
@@ -232,7 +232,7 @@ function MainContent({
         </button>
       </div>
       {articleDetail.analysis && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-200 md:font-semibold">
             {formatRelevance(articleDetail.analysis.relevanceLevel)}
           </span>
@@ -241,6 +241,11 @@ function MainContent({
           >
             카카오뱅크 영향: {formatImpact(articleDetail.analysis.impact ?? null)}
           </span>
+          {articleDetail.analysis.impactConfidence > 0 && (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              분석 신뢰도 {Math.round(getDisplayedImpactConfidence(articleDetail.analysis) * 100)}%
+            </span>
+          )}
         </div>
       )}
       {articleDetail.analysis ? (
@@ -250,6 +255,18 @@ function MainContent({
             <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
               {articleDetail.analysis.relevanceReason}
             </p>
+            {articleDetail.analysis.impactDimensions.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="영향 점검 영역">
+                {articleDetail.analysis.impactDimensions.map((dimension) => (
+                  <li
+                    key={dimension}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    {formatImpactDimension(dimension)}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -259,8 +276,7 @@ function MainContent({
                 : ''}
             </p>
             <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
-              {articleDetail.analysis.impactReason ??
-                '이 소식이 카카오뱅크에 미칠 영향은 아직 뚜렷하지 않습니다.'}
+              {getArticleImpactReason(articleDetail)}
             </p>
           </div>
         </div>
@@ -279,6 +295,14 @@ function MainContent({
       <article className="prose prose-slate mt-6 max-w-none font-[420] leading-7 dark:prose-invert [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:my-1">
         <ReactMarkdown>{getSummaryText(articleDetail.summary)}</ReactMarkdown>
       </article>
+      <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+        <p className="font-semibold">AI 요약·분석 안내</p>
+        <p className="mt-1">
+          자동 생성된 요약으로 오류가 있을 수 있습니다. {getSourceName(articleDetail.link)}의 원문과
+          함께 확인해 주세요
+          {articleDetail.publishedDate ? ` · 기사 날짜 ${articleDetail.publishedDate}` : ''}.
+        </p>
+      </div>
       <a
         href={articleDetail.link}
         target="_blank"
@@ -327,6 +351,69 @@ function ShareIcon(props: SVGProps<SVGSVGElement>) {
       <circle cx="16.5" cy="17.25" r="2.25" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   );
+}
+
+function getSourceName(link: string): string {
+  try {
+    return new URL(link).hostname.replace(/^www\./, '');
+  } catch {
+    return '원 언론사';
+  }
+}
+
+function formatImpactDimension(dimension: string): string {
+  const labels: Record<string, string> = {
+    REVENUE: '수익성',
+    COST: '비용',
+    CREDIT_RISK: '신용·건전성',
+    REGULATION: '규제',
+    BRAND: '브랜드·고객',
+    OPERATIONS: '서비스 운영',
+    GROWTH: '성장',
+  };
+  return labels[dimension] ?? dimension;
+}
+
+function getDisplayedImpactConfidence(
+  analysis: NonNullable<ArticleDetail['analysis']>,
+): number {
+  const evidenceCount = Math.max(1, new Set(analysis.evidenceArticleIds).size);
+  const evidenceCeiling = Math.min(
+    0.84,
+    0.56 + Math.max(0, evidenceCount - 1) * 0.09,
+  );
+  return Math.min(analysis.impactConfidence, evidenceCeiling);
+}
+
+function getArticleImpactReason(article: ArticleDetail): string {
+  const raw = article.analysis?.impactReason ??
+    '이 소식이 카카오뱅크에 미칠 영향은 아직 뚜렷하지 않습니다.';
+  const localized = Object.entries({
+    CREDIT_RISK: '신용·건전성',
+    OPERATIONS: '서비스 운영',
+    REGULATION: '규제',
+    REVENUE: '수익성',
+    GROWTH: '성장',
+    BRAND: '브랜드·고객',
+    COST: '비용',
+  }).reduce((text, [code, label]) => text.replaceAll(code, label), raw);
+  if (localized.includes('근거:')) {
+    return localized;
+  }
+  const evidence = getFirstSummarySentence(article.summary);
+  return evidence ? `${localized} 근거: ${evidence}` : localized;
+}
+
+function getFirstSummarySentence(summary: string | null): string {
+  if (!summary) {
+    return '';
+  }
+  const normalized = summary
+    .replace(/\\n/g, ' ')
+    .replace(/^\s*[-•]\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized.split(/(?<=[.!?])\s+/u)[0] ?? '';
 }
 
 export default MainContent;

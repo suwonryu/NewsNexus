@@ -174,6 +174,46 @@ export function normalizeEditorialText(value: string | null | undefined, maxSent
     .join(' ');
 }
 
+export function alignEditorialSummary(
+  headline: string,
+  summary: string | null | undefined,
+  maxSentences = 3,
+): string {
+  const normalized = normalizeEditorialText(summary, 12);
+  if (!normalized) {
+    return '';
+  }
+
+  const normalizedHeadline = headline.toLowerCase();
+  const topicSignals = Object.values(TOPIC_RULES)
+    .filter((rule) =>
+      [...rule.requiredAny, ...rule.strongPhrases].some((signal) =>
+        normalizedHeadline.includes(signal.toLowerCase()),
+      ),
+    )
+    .flatMap((rule) => [...rule.requiredAny, ...rule.strongPhrases])
+    .map((signal) => signal.toLowerCase());
+  const headlineTokens = headline
+    .toLowerCase()
+    .replace(/[^0-9a-z가-힣]+/gu, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length >= 2 && !['카카오뱅크', '카뱅', '영향', '흐름', '부각'].includes(token));
+  const sentences = splitSentences(normalized);
+  const aligned = sentences.filter((sentence) => {
+    const candidate = sentence.toLowerCase();
+    if (topicSignals.length > 0) {
+      return topicSignals.some((signal) => candidate.includes(signal));
+    }
+    const overlap = headlineTokens.filter((token) => candidate.includes(token)).length;
+    return overlap >= Math.min(2, Math.max(1, headlineTokens.length));
+  });
+
+  return normalizeEditorialText(
+    (aligned.length > 0 ? aligned : sentences.slice(0, 1)).join(' '),
+    maxSentences,
+  );
+}
+
 export function getTopicDisplayName(slugOrLabel: string): string {
   const normalized = slugOrLabel.toLowerCase() as TopicSlug;
   return TOPIC_RULES[normalized]?.title ?? formatEnumLabel(slugOrLabel);

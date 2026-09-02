@@ -41,6 +41,7 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
     (currentPage - 1) * ARCHIVE_PAGE_SIZE,
     currentPage * ARCHIVE_PAGE_SIZE,
   );
+  const headlineCounts = countHeadlines(pageItems);
   const groups = groupByMonth(pageItems);
   const siteUrl = getSiteUrl();
   const structuredData = {
@@ -99,9 +100,21 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
                             {formatDate(item.date)}
                           </time>
                           <div>
-                            <h3 className="font-[650] leading-6 text-slate-950 group-hover:text-[#0066cc] dark:text-white dark:group-hover:text-[#2997ff]">
-                              {item.headline}
-                            </h3>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-[650] leading-6 text-slate-950 group-hover:text-[#0066cc] dark:text-white dark:group-hover:text-[#2997ff]">
+                                {item.headline}
+                              </h3>
+                              {(headlineCounts.get(item.headline) ?? 0) > 1 && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
+                                  이어진 이슈 {headlineCounts.get(item.headline)}일
+                                </span>
+                              )}
+                            </div>
+                            {item.summary && (
+                              <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-300">
+                                {item.summary}
+                              </p>
+                            )}
                             {item.topicTags.length > 0 && (
                               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                 {item.topicTags.join(' · ')}
@@ -128,6 +141,14 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
       </main>
     </>
   );
+}
+
+function countHeadlines(items: BriefingArchiveItem[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    counts.set(item.headline, (counts.get(item.headline) ?? 0) + 1);
+  }
+  return counts;
 }
 
 function ArchivePagination({

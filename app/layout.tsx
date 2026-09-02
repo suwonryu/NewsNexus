@@ -1,7 +1,7 @@
-import localFont from 'next/font/local';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { SiteHeader } from '../src/components/SiteHeader';
+import { SiteFooter } from '../src/components/SiteFooter';
 import { ThemeProvider } from '../src/components/ThemeProvider';
 import { WebVitalsReporter } from '../src/components/WebVitalsReporter';
 import {
@@ -12,14 +12,6 @@ import {
 } from '../src/lib/siteMetadata';
 import { getSiteUrl } from '../src/lib/siteUrl';
 import './globals.css';
-
-const pretendard = localFont({
-  src: './fonts/PretendardVariable.woff2',
-  variable: '--font-pretendard',
-  display: 'swap',
-  preload: true,
-  weight: '45 920',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -77,16 +69,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`${pretendard.variable} transition-colors duration-300`}>
+      <body className="transition-colors duration-300">
         <script dangerouslySetInnerHTML={{ __html: themeInitializerScript }} />
         <ThemeProvider>
           <WebVitalsReporter />
+          <a className="skip-link" href="#main-content">
+            본문으로 건너뛰기
+          </a>
           <div className="site-header-shell">
             <div className="site-container">
               <SiteHeader />
             </div>
           </div>
-          {children}
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
+          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>

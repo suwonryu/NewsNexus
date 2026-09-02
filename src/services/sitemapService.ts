@@ -35,6 +35,12 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
     changeFrequency: 'daily',
     priority: '0.9',
   });
+  entries.push({
+    path: '/about',
+    lastModified: null,
+    changeFrequency: 'daily',
+    priority: '0.6',
+  });
   entries.push(...(await getReadyBriefingSitemapEntries()));
   entries.push(...(await getIndexableArticleSitemapEntries()));
   entries.push(
@@ -49,7 +55,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v6'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v7'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 

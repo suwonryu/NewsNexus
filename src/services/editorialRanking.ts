@@ -66,6 +66,7 @@ export function rankAndMergeIssues(
   const candidates = issues
     .filter((issue) => !isLowValueContent(`${issue.title} ${issue.summary}`))
     .filter((issue) => isDirectEnough(issue))
+    .filter((issue) => isSummaryCoherent(issue.title, issue.summary))
     .map((issue) => enrichIssue(issue, articleById));
   const groups: HomeIssueCluster[][] = [];
 
@@ -121,7 +122,7 @@ function enrichIssue(
 
   return {
     ...issue,
-    summary: normalizeEditorialText(issue.summary, 3),
+    summary: sanitizeIssueSummary(issue.title, issue.summary),
     editorialPriority: multiplyPriority(breakdown),
     priorityBreakdown: breakdown,
     articles: issueArticles,
@@ -167,6 +168,11 @@ function mergeGroup(group: HomeIssueCluster[]): HomeIssueCluster {
     title: group.length > 1 && event ? event.title : representative.title,
     summary: normalizeEditorialText(representative.summary, 3),
     impactReason: buildImpactReason(representative, articleCount, sourceCount),
+    impactConfidence: calibrateImpactConfidence(
+      representative.impactConfidence,
+      articleCount,
+      sourceCount,
+    ),
     articleCount,
     sourceCount,
     articles,
@@ -243,10 +249,13 @@ function buildImpactReason(
     )
     .replace(/\s*주요 점검 영역은 .*?입니다\.?$/u, '')
     .trim();
+  const reasonWithEvidence = normalized.includes('근거:')
+    ? normalized
+    : `${normalized} 근거: ${normalizeEditorialText(issue.summary, 1)}`;
   if (articleCount <= 1) {
-    return normalized;
+    return reasonWithEvidence;
   }
-  return `${sourceCount}개 매체의 ${articleCount}건 보도를 종합했습니다. ${normalized}`;
+  return `${sourceCount}개 매체의 ${articleCount}건 보도를 종합했습니다. ${reasonWithEvidence}`;
 }
 
 function isDirectEnough(issue: HomeIssueCluster): boolean {
@@ -258,6 +267,50 @@ function isDirectEnough(issue: HomeIssueCluster): boolean {
     return false;
   }
   return true;
+}
+
+function isSummaryCoherent(title: string, summary: string): boolean {
+  const titleEvent = getEventDefinition(title);
+  if (!titleEvent) {
+    return sanitizeIssueSummary(title, summary).length > 0;
+  }
+  return titleEvent.pattern.test(summary);
+}
+
+function sanitizeIssueSummary(title: string, summary: string): string {
+  const normalized = normalizeEditorialText(summary, 12);
+  if (!normalized) {
+    return '';
+  }
+  const titleEvent = getEventDefinition(title);
+  const titleTokens = tokenizeTitle(title);
+  const sentences = normalized.split(/(?<=[.!?])\s+/u).filter(Boolean);
+  const matching = sentences.filter((sentence) => {
+    if (titleEvent) {
+      return titleEvent.pattern.test(sentence);
+    }
+    if (DIRECT_BANK_PATTERN.test(sentence)) {
+      return true;
+    }
+    const overlap = [...titleTokens].filter((token) => sentence.toLowerCase().includes(token)).length;
+    return overlap >= Math.min(2, Math.max(1, titleTokens.size));
+  });
+  return matching.slice(0, 3).join(' ');
+}
+
+function calibrateImpactConfidence(
+  reported: number,
+  articleCount: number,
+  sourceCount: number,
+): number {
+  if (reported <= 0) {
+    return 0;
+  }
+  const evidenceCeiling = Math.min(
+    0.84,
+    0.56 + Math.max(0, sourceCount - 1) * 0.07 + Math.max(0, articleCount - 1) * 0.02,
+  );
+  return Math.round(Math.min(reported, evidenceCeiling) * 1000) / 1000;
 }
 
 function isKakaoBankSubject(title: string): boolean {

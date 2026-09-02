@@ -97,7 +97,6 @@ export function SiteHeader({ active, className }: SiteHeaderProps) {
         <Link
           href="/"
           className="min-w-0"
-          aria-label={`${SITE_NAME} 오늘 홈`}
           onClick={(event) => handleNavigate(event, NAV_ITEMS[0])}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0071e3] dark:text-[#2997ff]">

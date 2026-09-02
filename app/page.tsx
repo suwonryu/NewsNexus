@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { NewsHome } from '../src/components/home/NewsHome';
 import { getKoreaIsoDate } from '../src/lib/koreaDate';
-import { SITE_DESCRIPTION, SITE_NAME } from '../src/lib/siteMetadata';
+import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from '../src/lib/siteMetadata';
 import { getSiteUrl } from '../src/lib/siteUrl';
 import { getArticlesByDate } from '../src/services/articleServerApi';
 import { isLowValueContent } from '../src/services/contentQuality';
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: 'ko_KR',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
