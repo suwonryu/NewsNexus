@@ -12,7 +12,7 @@ interface PriorityBreakdown {
 const EVENT_DEFINITIONS = [
   {
     key: 'labor-strike',
-    pattern: /파업|쟁의|임금\s*교섭|성과급|노사\s*(?:갈등|협상)/i,
+    pattern: /파업|(?:^|[^가-힣])쟁의(?:권|행위|조정|절차|돌입|발생)?(?=$|[^가-힣])|임금\s*교섭|성과급|노사\s*(?:갈등|협상)/i,
     title: '카카오뱅크 첫 전면파업 예고…보상 협상·서비스 안정 쟁점',
     headline: '첫 전면파업 예고로 노사 갈등·서비스 안정 부각',
   },
@@ -43,8 +43,8 @@ const EVENT_DEFINITIONS = [
   {
     key: 'earnings',
     pattern: /실적\s*발표|순이익|영업이익|역대\s*최대\s*실적/i,
-    title: '카카오뱅크 실적과 성과 배분 논의 부각',
-    headline: '실적·성과 배분 쟁점 부각',
+    title: '카카오뱅크 실적과 인터넷은행 경쟁 구도 부각',
+    headline: '실적과 인터넷은행 경쟁 구도 부각',
   },
 ] as const;
 
@@ -85,25 +85,6 @@ export function rankAndMergeIssues(
     .sort((left, right) => right.editorialPriority - left.editorialPriority);
 }
 
-export function buildDisplayHeadline(
-  clusters: HomeIssueCluster[],
-  fallback: string,
-): string {
-  const phrases = clusters
-    .slice(0, 2)
-    .map((cluster) => getEventDefinition(`${cluster.title} ${cluster.summary}`)?.headline)
-    .filter((phrase): phrase is NonNullable<typeof phrase> => phrase !== undefined);
-
-  if (phrases.length > 0) {
-    return `카카오뱅크, ${[...new Set(phrases)].join('…')}`;
-  }
-
-  const normalizedFallback = normalizeEditorialText(fallback, 1)
-    .replace(/[.!?]$/, '')
-    .replace(/\.{3,}|…+$/g, '');
-  return normalizedFallback || '카카오뱅크 주요 변화와 영향을 한눈에';
-}
-
 function enrichIssue(
   issue: HomeIssueCluster,
   articleById: Map<number, ArticleListItem>,
@@ -119,9 +100,13 @@ function enrichIssue(
         ? [toClusterArticle(representative)]
         : [];
   const breakdown = calculatePriority(issue, representative?.sourceName, 1, 1);
+  const legacyTitle = issue.title === '카카오뱅크 실적과 성과 배분 논의 부각';
 
   return {
     ...issue,
+    title: legacyTitle
+      ? '카카오뱅크 실적과 인터넷은행 경쟁 구도 부각'
+      : issue.title,
     summary: sanitizeIssueSummary(issue.title, issue.summary),
     editorialPriority: multiplyPriority(breakdown),
     priorityBreakdown: breakdown,

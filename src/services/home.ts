@@ -2,7 +2,7 @@ import { getKoreaIsoDate, getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import type { ArticleListResponse } from '../types/article';
 import { getArticlesByDate, getDailyBriefing } from './articleServerApi';
 import { normalizeEditorialText } from './contentQuality';
-import { buildDisplayHeadline, rankAndMergeIssues } from './editorialRanking';
+import { rankAndMergeIssues } from './editorialRanking';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -237,7 +237,7 @@ async function enhanceHomeEditorialData(home: HomeData): Promise<HomeData> {
       ...home,
       latestReadyBriefing: {
         ...briefing,
-        displayHeadline: buildDisplayHeadline(topClusters, editorialLead),
+        displayHeadline: normalizeDisplayHeadline(editorialLead),
         displaySummary: normalizeEditorialText(summarySource, 3),
         topicTags:
           dailyBriefing.status === 'READY'
@@ -251,15 +251,22 @@ async function enhanceHomeEditorialData(home: HomeData): Promise<HomeData> {
       topClusters,
     };
   } catch {
+    const topClusters = rankAndMergeIssues(home.topClusters, []);
     return {
       ...home,
+      topClusters,
       latestReadyBriefing: {
         ...briefing,
-        displayHeadline: buildDisplayHeadline(home.topClusters, briefing.displayHeadline),
+        displayHeadline: normalizeDisplayHeadline(briefing.displayHeadline),
         displaySummary: normalizeEditorialText(briefing.displaySummary, 3),
       },
     };
   }
+}
+
+function normalizeDisplayHeadline(value: string): string {
+  return normalizeEditorialText(value, 1).replace(/[.!?]$/u, '') ||
+    '카카오뱅크 주요 변화와 영향을 한눈에';
 }
 
 async function resolveLatestReadyBriefing(

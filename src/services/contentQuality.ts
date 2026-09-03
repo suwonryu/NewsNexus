@@ -45,11 +45,11 @@ export const TOPIC_RULES = {
     title: '노사·인력',
     requiredAny: [
       '노조', '파업', '임금', '인력', '채용', '노사', '노동', '성과급', '고용',
-      '임단협', '쟁의', '단체협약',
+      '임단협', '노동쟁의', '쟁의권', '쟁의행위', '쟁의 절차', '쟁의 돌입', '단체협약',
     ],
     strongPhrases: [
       '전면 파업', '전면파업', '임금 교섭', '노사 협상', '인력 채용',
-      '피켓 시위', '쟁의권', '임단협', '단체행동',
+      '피켓 시위', '쟁의권', '쟁의행위', '임단협', '단체행동',
     ],
     excludedContext: [
       '가상자산', '자금세탁', '예금상품', '스테이블코인', '퀴즈',
@@ -327,7 +327,8 @@ function hasCoherentLaborContext(title: string, summary: string): boolean {
   const normalizedTitle = title.toLowerCase();
   const normalizedSummary = summary.toLowerCase();
   const coreSignals = [
-    '노조', '파업', '임금', '노사', '노동', '성과급', '임단협', '쟁의', '단체협약',
+    '노조', '파업', '임금', '노사', '노동', '성과급', '임단협',
+    '노동쟁의', '쟁의권', '쟁의행위', '쟁의 절차', '쟁의 돌입', '단체협약',
   ];
   const staffingSignals = ['인력', '채용', '고용'];
   const titleCoreCount = coreSignals.filter((signal) => normalizedTitle.includes(signal)).length;
