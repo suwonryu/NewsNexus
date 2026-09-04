@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { DEFAULT_OG_IMAGE, SITE_NAME } from '../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../src/lib/siteUrl';
 import {
-  getBriefingArchive,
+  getAllReadyBriefings,
   type BriefingArchiveItem,
 } from '../../src/services/briefingArchive';
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: '지난 카카오뱅크 뉴스 브리핑',
   description: '놓친 카카오뱅크 이슈와 주요 뉴스의 흐름을 날짜별로 다시 살펴보세요.',
   alternates: {
@@ -30,13 +31,33 @@ interface ArchivePageProps {
   searchParams: Promise<{ page?: string }>;
 }
 
+export async function generateMetadata({ searchParams }: ArchivePageProps): Promise<Metadata> {
+  const { page: rawPage } = await searchParams;
+  const page = Number(rawPage ?? 1);
+  const items = await getAllReadyBriefings();
+  const valid = Number.isSafeInteger(page) && page > 0
+    && page <= Math.max(1, Math.ceil(items.length / ARCHIVE_PAGE_SIZE));
+  const canonical = valid && page > 1 ? `/archive?page=${page}` : '/archive';
+  return {
+    ...baseMetadata,
+    title: valid && page > 1 ? `지난 카카오뱅크 뉴스 브리핑 · ${page}페이지` : baseMetadata.title,
+    alternates: { canonical },
+    openGraph: { ...baseMetadata.openGraph, url: canonical },
+    ...(!valid ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
 export default async function ArchivePage({ searchParams }: ArchivePageProps) {
-  const params = await searchParams;
-  const requestedPage = Number(params.page);
-  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const items = await getBriefingArchive(12);
+  const { page: rawPage } = await searchParams;
+  const page = Number(rawPage ?? 1);
+  if (!Number.isSafeInteger(page) || page < 1) notFound();
+  if (rawPage !== undefined && (page === 1 || rawPage !== String(page))) {
+    permanentRedirect(page === 1 ? '/archive' : `/archive?page=${page}`);
+  }
+  const items = await getAllReadyBriefings();
   const pageCount = Math.max(1, Math.ceil(items.length / ARCHIVE_PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
+  if (page > pageCount) notFound();
+  const currentPage = page;
   const pageItems = items.slice(
     (currentPage - 1) * ARCHIVE_PAGE_SIZE,
     currentPage * ARCHIVE_PAGE_SIZE,

@@ -13,7 +13,7 @@ import {
 import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
-import { getBriefingArchive } from '../../../src/services/briefingArchive';
+import { getAllReadyBriefings } from '../../../src/services/briefingArchive';
 import { normalizeEditorialText } from '../../../src/services/contentPresentation';
 import { getPublishedTopics } from '../../../src/services/topics';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
@@ -445,7 +445,7 @@ function EditorialAnalysisSection({ briefing }: { briefing: DailyBriefingRespons
 }
 
 async function BriefingDateNavigation({ date }: { date: string }) {
-  const archive = await getBriefingArchive(12);
+  const archive = await getAllReadyBriefings();
   const currentIndex = archive.findIndex((item) => item.date === date);
   const previousDate = currentIndex >= 0 ? archive[currentIndex + 1]?.date : undefined;
   const nextDate = currentIndex > 0 ? archive[currentIndex - 1]?.date : undefined;

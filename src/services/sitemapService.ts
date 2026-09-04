@@ -1,10 +1,8 @@
 import { unstable_cache } from 'next/cache';
-import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getArticleDetail, getDailyBriefing } from './articleServerApi';
 import { getAllReadyBriefings } from './briefingArchive';
 import { getPublishedTopics } from './topics';
 
-const ARTICLE_SITEMAP_LOOKBACK_DAYS = 14;
 export const SITEMAP_CHUNK_SIZE = readIntEnv('SITEMAP_CHUNK_SIZE', 500, 50, 5000);
 export const SITEMAP_REVALIDATE_SECONDS = readIntEnv(
   'SITEMAP_REVALIDATE_SECONDS',
@@ -23,14 +21,14 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   const entries: SitemapEntry[] = [
     {
       path: '/',
-      lastModified: new Date().toISOString(),
+      lastModified: null,
       changeFrequency: 'hourly',
       priority: '1.0',
     },
   ];
   entries.push({
     path: '/archive',
-    lastModified: new Date().toISOString(),
+    lastModified: null,
     changeFrequency: 'daily',
     priority: '0.9',
   });
@@ -41,7 +39,6 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
     priority: '0.6',
   });
   entries.push(...(await getReadyBriefingSitemapEntries()));
-  entries.push(...(await getIndexableArticleSitemapEntries()));
   entries.push(
     ...(await getPublishedTopics()).map((topic) => ({
       path: `/topics/${topic.slug}`,
@@ -54,7 +51,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v8'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v10'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
@@ -62,13 +59,32 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   return getCachedSitemapEntries();
 }
 
-async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
-  const dates = Array.from(
-    { length: ARTICLE_SITEMAP_LOOKBACK_DAYS },
-    (_, dayOffset) => getKoreaIsoDateWithOffset(dayOffset),
-  );
+export async function getArticleSitemapMonths(entries?: SitemapEntry[]): Promise<string[]> {
+  const inventory = entries ?? await getSitemapEntries();
+  return [...new Set(inventory
+    .filter((entry) => entry.path.startsWith('/briefing/'))
+    .map((entry) => entry.path.slice('/briefing/'.length, '/briefing/'.length + 7)))]
+    .filter((month) => /^\d{4}-(0[1-9]|1[0-2])$/.test(month))
+    .sort().reverse();
+}
+
+// Each month is loaded and cached independently, so discovering the index does
+// not require fetching every historical article. Never enqueue AI generation.
+const getCachedArticleSitemapEntries = unstable_cache(loadArticleSitemapEntries,
+  ['article-sitemap-month-v2'], { revalidate: SITEMAP_REVALIDATE_SECONDS });
+
+export async function getArticleSitemapEntries(month: string): Promise<SitemapEntry[]> {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return [];
+  return getCachedArticleSitemapEntries(month);
+}
+
+async function loadArticleSitemapEntries(month: string): Promise<SitemapEntry[]> {
+  const archive = await getAllReadyBriefings({ throwOnError: true });
+  const dates = [...new Set(archive
+    .filter((briefing) => briefing.date.startsWith(`${month}-`))
+    .map((briefing) => briefing.date))];
   const briefings = await mapWithConcurrency(dates, 4, (date) =>
-    getDailyBriefing(date, { enqueue: false }),
+    getDailyBriefing(date, { enqueue: false, throwOnError: true }),
   );
   const candidateDates = new Map<number, string>();
 
@@ -83,7 +99,9 @@ async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
     }
   }
 
-  const articles = await mapWithConcurrency([...candidateDates.keys()], 6, getArticleDetail);
+  const articles = await mapWithConcurrency([...candidateDates.keys()], 6, (id) =>
+    getArticleDetail(id, { throwOnError: true }),
+  );
   return articles
     .filter((article): article is NonNullable<typeof article> =>
       article?.analysis?.indexable === true && article.analysis.sitemapEligible === true,
@@ -105,7 +123,7 @@ export async function getSitemapChunkCount(): Promise<number> {
 }
 
 async function getReadyBriefingSitemapEntries(): Promise<SitemapEntry[]> {
-  const briefings = await getAllReadyBriefings();
+  const briefings = await getAllReadyBriefings({ throwOnError: true });
   return briefings
     .filter((briefing) => briefing.summary.trim().length > 0)
     .map((briefing) => ({

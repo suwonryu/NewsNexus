@@ -32,7 +32,7 @@ function DailyBriefingCard({ briefing }: DailyBriefingCardProps) {
             오늘의 핵심 흐름
           </h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-200">
-            {normalizeEditorialText(briefing.summary, 3)}
+            {normalizeEditorialText(briefing.summary, Number.POSITIVE_INFINITY)}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2.5">
