@@ -51,29 +51,45 @@ interface KabangDetailResponse {
   publishedDate?: string | null;
 }
 
+class ApiResponseError extends Error {
+  constructor(readonly status: number) {
+    super(`Request failed: ${status}`);
+  }
+}
+
 async function getJson<T>(
   url: string,
   init?: RequestInit & { next?: { revalidate: number } },
 ): Promise<T> {
-  const response = await fetch(url, init);
+  const response = await fetch(url, {
+    ...init,
+    signal: init?.signal ?? AbortSignal.timeout(8_000),
+  });
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    throw new ApiResponseError(response.status);
   }
 
   return response.json() as Promise<T>;
 }
 
-export async function getArticleDetail(id: number): Promise<ArticleDetail | null> {
+export async function getArticleDetail(
+  id: number,
+  { throwOnError = false }: { throwOnError?: boolean } = {},
+): Promise<ArticleDetail | null> {
   try {
     const [response, analysis] = await Promise.all([
       getJson<KabangDetailResponse>(`${KABANG_ARTICLE_API_BASE}/${id}`, {
         next: { revalidate: REVALIDATE_SECONDS },
       }),
-      getOptionalArticleAnalysis(id),
+      getOptionalArticleAnalysis(id, throwOnError),
     ]);
     return mapKabangDetailResponse(response, analysis);
-  } catch {
+  } catch (error) {
+    if (throwOnError) {
+      if (error instanceof ApiResponseError && error.status === 404) return null;
+      throw error;
+    }
     return getMockArticleDetail(id);
   }
 }
@@ -105,7 +121,7 @@ export async function getArticlesByDate(
 
 export async function getDailyBriefing(
   date: IsoDate,
-  { enqueue = true }: { enqueue?: boolean } = {},
+  { enqueue = true, throwOnError = false }: { enqueue?: boolean; throwOnError?: boolean } = {},
 ): Promise<DailyBriefingResponse> {
 
   try {
@@ -120,7 +136,8 @@ export async function getDailyBriefing(
     );
 
     return normalizeDailyBriefingResponse(response, date);
-  } catch {
+  } catch (error) {
+    if (throwOnError) throw error;
     return buildFallbackDailyBriefingResponse(date);
   }
 }
@@ -222,12 +239,13 @@ function mapKabangListResponse(response: KabangListResponse): ArticleListRespons
   };
 }
 
-async function getOptionalArticleAnalysis(id: number): Promise<ArticleImpactAnalysis | null> {
+async function getOptionalArticleAnalysis(id: number, throwOnError = false): Promise<ArticleImpactAnalysis | null> {
   try {
     return await getJson<ArticleImpactAnalysis>(`${KABANG_ANALYSIS_API_BASE}/${id}`, {
       next: { revalidate: REVALIDATE_SECONDS },
     });
-  } catch {
+  } catch (error) {
+    if (throwOnError && !(error instanceof ApiResponseError && error.status === 404)) throw error;
     return null;
   }
 }

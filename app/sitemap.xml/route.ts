@@ -1,16 +1,35 @@
 import { getSiteUrl } from '../../src/lib/siteUrl';
 import {
-  getSitemapChunkCount,
+  getSitemapEntries,
+  SITEMAP_CHUNK_SIZE,
+  getArticleSitemapMonths,
   SITEMAP_REVALIDATE_SECONDS,
 } from '../../src/services/sitemapService';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const siteUrl = getSiteUrl();
-  const totalChunks = await getSitemapChunkCount();
+  try {
+    return await renderSitemapIndex();
+  } catch {
+    return new Response('Sitemap temporarily unavailable', {
+      status: 503,
+      headers: { 'Cache-Control': 'no-store', 'Retry-After': '300' },
+    });
+  }
+}
 
-  const chunks = Array.from({ length: totalChunks }, (_, id) => {
+async function renderSitemapIndex() {
+  const siteUrl = getSiteUrl();
+  const entries = await getSitemapEntries();
+  const totalChunks = Math.max(1, Math.ceil(entries.length / SITEMAP_CHUNK_SIZE));
+  const articleMonths = await getArticleSitemapMonths(entries);
+
+  const ids = [
+    ...Array.from({ length: totalChunks }, (_, id) => String(id)),
+    ...articleMonths.map((month) => `articles-${month}`),
+  ];
+  const chunks = ids.map((id) => {
     const url = `${siteUrl}/sitemap/${id}`;
     return `<sitemap><loc>${escapeXml(url)}</loc></sitemap>`;
   }).join('');

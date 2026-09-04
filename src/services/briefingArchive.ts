@@ -49,7 +49,9 @@ export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchi
   }
 }
 
-export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
+export async function getAllReadyBriefings(
+  { throwOnError = false }: { throwOnError?: boolean } = {},
+): Promise<BriefingArchiveItem[]> {
   try {
     const response = await fetch(`${KABANG_API_ROOT}/briefings?status=READY`, {
       next: { revalidate: 1800 },
@@ -64,7 +66,8 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
     if (items.length > 0) {
       return sortItems(items);
     }
-  } catch {
+  } catch (error) {
+    if (throwOnError) throw error;
     return [];
   }
   return [];
