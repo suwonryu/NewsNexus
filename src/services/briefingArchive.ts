@@ -1,15 +1,10 @@
-import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
-import { getDailyBriefing } from './articleServerApi';
 import {
-  alignEditorialSummary,
   getTopicDisplayName,
   normalizeEditorialText,
-} from './contentQuality';
+} from './contentPresentation';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
-const MIN_PRIMARY_ARCHIVE_ITEMS = 20;
-const RECENT_ARCHIVE_LOOKBACK_DAYS = 7;
 
 export interface BriefingArchiveItem {
   date: string;
@@ -48,17 +43,10 @@ export async function getBriefingArchive(monthCount = 12): Promise<BriefingArchi
       .flat()
       .map(normalizeItem)
       .filter(isArchiveItem);
-    if (items.length >= MIN_PRIMARY_ARCHIVE_ITEMS) {
-      const recentItems = await buildCompatibilityArchive(RECENT_ARCHIVE_LOOKBACK_DAYS);
-      return sortItems(mergeByDate(items, recentItems));
-    }
-    const compatibilityItems = await buildCompatibilityArchive();
-    return sortItems(mergeByDate(items, compatibilityItems));
+    return sortItems(items);
   } catch {
-    // The compatibility path below keeps the archive usable during backend rollout.
+    return [];
   }
-
-  return buildCompatibilityArchive();
 }
 
 export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
@@ -77,64 +65,20 @@ export async function getAllReadyBriefings(): Promise<BriefingArchiveItem[]> {
       return sortItems(items);
     }
   } catch {
-    // Use the rollout-compatible recent archive until the new endpoint is available.
+    return [];
   }
-  return buildCompatibilityArchive();
-}
-
-async function buildCompatibilityArchive(dayCount = 30): Promise<BriefingArchiveItem[]> {
-  const dayOffsets = Array.from({ length: dayCount }, (_, index) => index + 1);
-  const items = await mapWithConcurrency<number, BriefingArchiveItem | null>(
-    dayOffsets,
-    6,
-    async (dayOffset) => {
-      const date = getKoreaIsoDateWithOffset(dayOffset);
-      const briefing = await getDailyBriefing(date, { enqueue: false });
-      if (briefing.status !== 'READY' || !briefing.summary) {
-        return null;
-      }
-      const headline =
-        briefing.editorialAnalysis?.keyChanges?.[0] ||
-        briefing.keywords.slice(0, 3).join(' · ') ||
-        `${date} 카카오뱅크 뉴스 브리핑`;
-      return {
-        date,
-        headline,
-        summary: alignEditorialSummary(headline, briefing.summary, 3),
-        topicTags: briefing.keywords.slice(0, 3),
-        publishedAt: briefing.generatedAt,
-        updatedAt: briefing.generatedAt,
-        qualityScore: briefing.qualityScore,
-        relevantArticleRatio:
-          briefing.relevantArticleRatio ??
-          (briefing.articleCount > 0
-            ? (briefing.articleCount - briefing.sentimentSummary.unrelatedCount) /
-              briefing.articleCount
-            : 0),
-        representativeArticleCount:
-          briefing.representativeArticleCount ?? briefing.featuredArticles.length,
-        uniqueSourceCount:
-          briefing.uniqueSourceCount ??
-          new Set(briefing.featuredArticles.map((article) => article.sourceName)).size,
-      } satisfies BriefingArchiveItem;
-    },
-  );
-  return sortItems(items.filter(isArchiveItem));
+  return [];
 }
 
 function normalizeItem(value: Partial<BriefingArchiveItem>): BriefingArchiveItem | null {
-  if (typeof value.date !== 'string') {
+  if (!value || typeof value.date !== 'string' || typeof value.headline !== 'string' || !value.headline.trim() || typeof value.summary !== 'string' || !value.summary.trim()) {
     return null;
   }
-  const headline =
-    typeof value.headline === 'string' && value.headline.trim()
-      ? value.headline.trim()
-      : `${value.date} 카카오뱅크 뉴스 브리핑`;
   return {
     date: value.date,
-    headline,
+    headline: value.headline.trim(),
     summary:
-      typeof value.summary === 'string' ? alignEditorialSummary(headline, value.summary, 3) : '',
+      typeof value.summary === 'string' ? normalizeEditorialText(value.summary, 3) : '',
     topicTags: Array.isArray(value.topicTags)
       ? value.topicTags
           .filter((tag): tag is string => typeof tag === 'string')
@@ -156,38 +100,6 @@ function isArchiveItem(value: BriefingArchiveItem | null): value is BriefingArch
 
 function sortItems(items: BriefingArchiveItem[]) {
   return [...items].sort((left, right) => right.date.localeCompare(left.date));
-}
-
-function mergeByDate(
-  primary: BriefingArchiveItem[],
-  compatibility: BriefingArchiveItem[],
-): BriefingArchiveItem[] {
-  const items = new Map<string, BriefingArchiveItem>();
-  for (const item of compatibility) {
-    items.set(item.date, item);
-  }
-  for (const item of primary) {
-    items.set(item.date, item);
-  }
-  return [...items.values()];
-}
-
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let cursor = 0;
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (cursor < items.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await mapper(items[index]);
-    }
-  });
-  await Promise.all(workers);
-  return results;
 }
 
 function recentMonths(count: number): Array<{ year: number; month: number }> {

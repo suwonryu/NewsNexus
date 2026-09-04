@@ -1,9 +1,4 @@
-import {
-  getTopicConfidence,
-  getTopicDisplayName,
-  normalizeEditorialText,
-  TOPIC_RULES,
-} from './contentQuality';
+import { normalizeEditorialText } from './contentPresentation';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -18,7 +13,6 @@ export interface NewsTopic {
     headline: string;
     issueTitle: string;
     issueSummary: string;
-    classificationConfidence: number;
   }>;
 }
 
@@ -33,7 +27,7 @@ export async function getPublishedTopics(): Promise<NewsTopic[]> {
     }
     const values = (await response.json()) as unknown;
     return Array.isArray(values)
-      ? values.map(normalizeTopic).filter(isTopic).filter(isPublishedTopic)
+      ? values.map(normalizeTopic).filter(isTopic)
       : [];
   } catch {
     return [];
@@ -50,7 +44,7 @@ export async function getTopic(slug: string): Promise<NewsTopic | null> {
       return null;
     }
     const topic = normalizeTopic((await response.json()) as unknown);
-    return topic && isPublishedTopic(topic) ? topic : null;
+    return topic;
   } catch {
     return null;
   }
@@ -64,49 +58,26 @@ function normalizeTopic(value: unknown): NewsTopic | null {
   if (typeof raw.slug !== 'string' || typeof raw.title !== 'string') {
     return null;
   }
-  const rule = TOPIC_RULES[raw.slug as keyof typeof TOPIC_RULES];
-  if (!rule) {
-    return null;
-  }
   const rawBriefings: unknown[] = Array.isArray(raw.briefings) ? raw.briefings : [];
   const briefings = rawBriefings.length > 0
     ? rawBriefings
         .filter(isIncomingTopicBriefing)
-        .map((item) => {
-          const classificationConfidence = getTopicConfidence(
-            raw.slug!,
-            item.issueTitle,
-            item.issueSummary,
-          );
-          return {
-            ...item,
-            issueSummary: normalizeEditorialText(item.issueSummary, 3),
-            classificationConfidence,
-          };
-        })
-        .filter((item) => item.classificationConfidence >= rule.minimumConfidence)
-        .sort((left, right) => right.date.localeCompare(left.date))
+        .map((item) => ({
+          ...item,
+          issueSummary: normalizeEditorialText(item.issueSummary, 3),
+        }))
     : [];
   return {
     slug: raw.slug,
-    title: getTopicDisplayName(raw.slug),
+    title: raw.title,
     description: typeof raw.description === 'string' ? raw.description : '',
-    trendSummary:
-      briefings.length > 0
-        ? buildTrendSummary(briefings)
-        : typeof raw.trendSummary === 'string'
-          ? normalizeEditorialText(raw.trendSummary, 2)
-          : '',
+    trendSummary: typeof raw.trendSummary === 'string' ? raw.trendSummary : '',
     briefings,
   };
 }
 
 function isTopic(value: NewsTopic | null): value is NewsTopic {
   return value !== null;
-}
-
-function isPublishedTopic(value: NewsTopic): boolean {
-  return value.description.trim().length >= 200 && value.briefings.length >= 3;
 }
 
 function isIncomingTopicBriefing(
@@ -127,12 +98,4 @@ function isIncomingTopicBriefing(
     typeof value.issueTitle === 'string' &&
     typeof value.issueSummary === 'string'
   );
-}
-
-function buildTrendSummary(briefings: NewsTopic['briefings']): string {
-  const titles = briefings.slice(0, 3).map((briefing) => briefing.issueTitle);
-  if (titles.length === 0) {
-    return '';
-  }
-  return `최근에는 ${titles.join(' → ')} 순으로 관련 흐름이 이어졌습니다.`;
 }

@@ -46,6 +46,8 @@ export interface ArticleDetail {
 }
 
 export interface ArticleImpactAnalysis {
+  indexable?: boolean;
+  sitemapEligible?: boolean;
   relevanceLevel: 'DIRECT' | 'INDUSTRY' | 'IRRELEVANT';
   relevanceConfidence: number;
   relevanceReason: string;

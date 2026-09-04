@@ -1,8 +1,6 @@
-import { getKoreaIsoDate, getKoreaIsoDateWithOffset } from '../lib/koreaDate';
-import type { ArticleListResponse } from '../types/article';
-import { getArticlesByDate, getDailyBriefing } from './articleServerApi';
-import { normalizeEditorialText } from './contentQuality';
-import { rankAndMergeIssues } from './editorialRanking';
+import { getKoreaIsoDate } from '../lib/koreaDate';
+import type { ArticleListItem } from '../types/article';
+import { normalizeEditorialText } from './contentPresentation';
 
 const KABANG_API_ROOT =
   process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
@@ -51,6 +49,7 @@ export interface HomeIssueCluster {
 }
 
 export interface HomeData {
+  recentArticles: ArticleListItem[];
   today: string;
   todayStatus: HomeBriefingStatus;
   latestReadyBriefing: HomeBriefingSummary | null;
@@ -73,7 +72,6 @@ export interface IssuePage {
 }
 
 export async function getHomeData(): Promise<HomeData> {
-  let home: HomeData;
   try {
     const response = await fetch(`${KABANG_API_ROOT}/home`, {
       next: { revalidate: HOME_REVALIDATE_SECONDS },
@@ -82,11 +80,10 @@ export async function getHomeData(): Promise<HomeData> {
     if (!response.ok) {
       throw new Error(`Home API failed: ${response.status}`);
     }
-    home = normalizeHomeData((await response.json()) as Partial<HomeData>);
+    return normalizeHomeData((await response.json()) as Partial<HomeData>);
   } catch {
-    home = await buildCompatibilityHomeData();
+    return normalizeHomeData({});
   }
-  return enhanceHomeEditorialData(home);
 }
 
 export async function getIssues(
@@ -106,7 +103,6 @@ export async function getIssues(
     const items = Array.isArray(raw.items)
       ? raw.items.map(normalizeCluster).filter((item): item is HomeIssueCluster => item !== null)
       : [];
-    const articlePage = await safeGetArticles(date, 100);
     return {
       date,
       relevance,
@@ -114,7 +110,7 @@ export async function getIssues(
       size: normalizeCount(raw.size) || 20,
       hasNext: raw.hasNext === true,
       nextCursor: typeof raw.nextCursor === 'string' ? raw.nextCursor : null,
-      items: rankAndMergeIssues(items, articlePage.items),
+      items,
     };
   } catch {
     return {
@@ -129,199 +125,13 @@ export async function getIssues(
   }
 }
 
-async function buildCompatibilityHomeData(): Promise<HomeData> {
-  const today = getKoreaIsoDate();
-  const collection = await safeGetArticles(today);
-  let latestReadyBriefing: HomeData['latestReadyBriefing'] = null;
-  let topClusters: HomeIssueCluster[] = [];
-  let watchNext: string[] = [];
-
-  for (let dayOffset = 1; dayOffset <= 14; dayOffset += 1) {
-    const date = getKoreaIsoDateWithOffset(dayOffset);
-    const briefing = await getDailyBriefing(date, { enqueue: false });
-    if (briefing.status !== 'READY' || !briefing.summary) {
-      continue;
-    }
-
-    const topicTags = briefing.keywords.slice(0, 5);
-    latestReadyBriefing = {
-      date,
-      displayHeadline:
-        briefing.editorialAnalysis?.keyChanges?.[0] ??
-        topicTags.slice(0, 3).join(' · ') ??
-        `${date} 카카오뱅크 뉴스 브리핑`,
-      displaySummary: normalizeEditorialText(briefing.summary, 3),
-      topicTags,
-      updatedAt: briefing.generatedAt ?? `${date}T00:00:00+09:00`,
-    };
-    topClusters = buildFallbackClusters(briefing);
-    watchNext = briefing.editorialAnalysis?.watchPoint
-      ? [briefing.editorialAnalysis.watchPoint]
-      : [];
-    break;
-  }
-
-  return {
-    today,
-    todayStatus: 'PREPARING',
-    latestReadyBriefing,
-    topClusters,
-    watchNext,
-    collection: {
-      articleCount: collection.uniqueCount,
-      lastCollectedAt: null,
-    },
-  };
-}
-
-function buildFallbackClusters(
-  briefing: Awaited<ReturnType<typeof getDailyBriefing>>,
-): HomeIssueCluster[] {
-  const details = briefing.keywordDetails ?? [];
-  const impactReason =
-    briefing.editorialAnalysis?.kakaoBankImpact ??
-    '기존 브리핑 데이터를 사용 중이며 이슈별 영향 근거를 재분석하고 있습니다.';
-
-  return details.slice(0, 3).map((detail, index) => {
-    const article = briefing.featuredArticles[index] ?? briefing.featuredArticles[0];
-    return {
-      id: `compat-${briefing.date}-${index}`,
-      title: detail.keyword,
-      summary: detail.description,
-      bankImpact: briefing.editorialAnalysis?.kakaoBankImpact ? 'MIXED' : 'NEUTRAL',
-      impactConfidence: 0,
-      impactHorizon: null,
-      impactDimensions: [],
-      impactReason,
-      articleCount: 1,
-      sourceCount: article ? 1 : 0,
-      representativeArticleId: article?.id ?? null,
-      topicSlug: null,
-      articles: article
-        ? [
-            {
-              id: article.id,
-              title: article.title,
-              link: article.link,
-              sourceName: article.sourceName,
-            },
-          ]
-        : [],
-      editorialPriority: 0,
-    };
-  });
-}
-
-async function enhanceHomeEditorialData(home: HomeData): Promise<HomeData> {
-  const briefing = await resolveLatestReadyBriefing(home.latestReadyBriefing);
-  if (!briefing) {
-    return home;
-  }
-
-  try {
-    const [issues, articles, dailyBriefing] = await Promise.all([
-      getIssues(briefing.date, 'DIRECT'),
-      getArticlesByDate(briefing.date, null, 100),
-      getDailyBriefing(briefing.date, { enqueue: false }),
-    ]);
-    const candidates = issues.items.length > 0 ? issues.items : home.topClusters;
-    const topClusters = rankAndMergeIssues(candidates, articles.items);
-    const summarySource =
-      dailyBriefing.status === 'READY' && dailyBriefing.summary
-        ? dailyBriefing.summary
-        : briefing.displaySummary;
-    const editorialLead =
-      dailyBriefing.editorialAnalysis?.keyChanges?.[0] ?? briefing.displayHeadline;
-
-    return {
-      ...home,
-      latestReadyBriefing: {
-        ...briefing,
-        displayHeadline: normalizeDisplayHeadline(editorialLead),
-        displaySummary: normalizeEditorialText(summarySource, 3),
-        topicTags:
-          dailyBriefing.status === 'READY'
-            ? dailyBriefing.keywords.slice(0, 5)
-            : briefing.topicTags,
-        updatedAt:
-          dailyBriefing.status === 'READY'
-            ? dailyBriefing.generatedAt ?? briefing.updatedAt
-            : briefing.updatedAt,
-      },
-      topClusters,
-    };
-  } catch {
-    const topClusters = rankAndMergeIssues(home.topClusters, []);
-    return {
-      ...home,
-      topClusters,
-      latestReadyBriefing: {
-        ...briefing,
-        displayHeadline: normalizeDisplayHeadline(briefing.displayHeadline),
-        displaySummary: normalizeEditorialText(briefing.displaySummary, 3),
-      },
-    };
-  }
-}
-
-function normalizeDisplayHeadline(value: string): string {
-  return normalizeEditorialText(value, 1).replace(/[.!?]$/u, '') ||
-    '카카오뱅크 주요 변화와 영향을 한눈에';
-}
-
-async function resolveLatestReadyBriefing(
-  current: HomeData['latestReadyBriefing'],
-): Promise<HomeData['latestReadyBriefing']> {
-  const latestCompletedDate = getKoreaIsoDateWithOffset(1);
-  if (current && current.date >= latestCompletedDate) {
-    return current;
-  }
-
-  for (let dayOffset = 1; dayOffset <= 7; dayOffset += 1) {
-    const date = getKoreaIsoDateWithOffset(dayOffset);
-    if (current && date <= current.date) {
-      break;
-    }
-    const briefing = await getDailyBriefing(date, { enqueue: false });
-    if (briefing.status !== 'READY' || !briefing.summary) {
-      continue;
-    }
-    const topicTags = briefing.keywords.slice(0, 5);
-    return {
-      date,
-      displayHeadline:
-        briefing.editorialAnalysis?.keyChanges?.[0] ??
-        topicTags.slice(0, 3).join(' · ') ??
-        `${date} 카카오뱅크 뉴스 브리핑`,
-      displaySummary: normalizeEditorialText(briefing.summary, 3),
-      topicTags,
-      updatedAt: briefing.generatedAt ?? `${date}T00:00:00+09:00`,
-    };
-  }
-  return current;
-}
-
-async function safeGetArticles(date: string, size = 20): Promise<ArticleListResponse> {
-  try {
-    return await getArticlesByDate(date, null, size);
-  } catch {
-    return {
-      date,
-      totalCount: 0,
-      uniqueCount: 0,
-      offset: 0,
-      size,
-      hasNext: false,
-      nextCursor: null,
-      items: [],
-    };
-  }
-}
-
 function normalizeHomeData(raw: Partial<HomeData>): HomeData {
   const today = typeof raw.today === 'string' ? raw.today : getKoreaIsoDate();
   return {
     today,
+    recentArticles: normalizeClusterArticles(raw.recentArticles).map((article) => ({
+      ...article, publishedDate: today,
+    })),
     todayStatus: raw.todayStatus === 'READY' ? 'READY' : 'PREPARING',
     latestReadyBriefing: normalizeBriefing(raw.latestReadyBriefing),
     topClusters: Array.isArray(raw.topClusters)
@@ -339,23 +149,18 @@ function normalizeHomeData(raw: Partial<HomeData>): HomeData {
 }
 
 function normalizeBriefing(value: HomeData['latestReadyBriefing'] | undefined) {
-  if (!value || typeof value.date !== 'string') {
+  if (!value || typeof value.date !== 'string' || typeof value.displaySummary !== 'string') {
     return null;
   }
-  const legacy = value as HomeData['latestReadyBriefing'] & {
-    headline?: string;
-    summary?: string;
-  };
+  const displayHeadline = normalizeText(value.displayHeadline);
+  const displaySummary = normalizeEditorialText(value.displaySummary, 3);
+  if (!displayHeadline || !displaySummary) {
+    return null;
+  }
   return {
     date: value.date,
-    displayHeadline:
-      normalizeText(value.displayHeadline) ||
-      normalizeText(legacy.headline) ||
-      `${value.date} 카카오뱅크 뉴스 브리핑`,
-    displaySummary: normalizeEditorialText(
-      normalizeText(value.displaySummary) || normalizeText(legacy.summary),
-      3,
-    ),
+    displayHeadline,
+    displaySummary,
     topicTags: normalizeStrings(value.topicTags).slice(0, 5),
     updatedAt: normalizeText(value.updatedAt) || `${value.date}T00:00:00+09:00`,
   };

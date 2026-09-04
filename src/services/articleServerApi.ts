@@ -15,7 +15,8 @@ import type {
 import { buildFallbackDailyBriefingResponse, createEmptySentimentSummary } from './dailyBriefing';
 import type { DateTreeResponse } from '../types/article';
 
-const KABANG_API_ROOT = 'https://fury.kabang.app/v2/kabang';
+const KABANG_API_ROOT =
+  process.env.KABANG_API_ROOT?.trim() || 'https://fury.kabang.app/v2/kabang';
 const KABANG_ARTICLE_API_BASE = `${KABANG_API_ROOT}/new`;
 const KABANG_BRIEFING_API_BASE = `${KABANG_API_ROOT}/briefings`;
 const KABANG_ANALYSIS_API_BASE = `${KABANG_API_ROOT}/analysis/articles`;
@@ -120,8 +121,7 @@ export async function getDailyBriefing(
 
     return normalizeDailyBriefingResponse(response, date);
   } catch {
-    const fallbackArticles = getMockArticlesByDate(date, null, 100).items;
-    return buildFallbackDailyBriefingResponse(date, fallbackArticles);
+    return buildFallbackDailyBriefingResponse(date);
   }
 }
 
@@ -257,6 +257,13 @@ function normalizeDailyBriefingResponse(
   response: DailyBriefingResponse,
   requestedDate: IsoDate,
 ): DailyBriefingResponse {
+  if (
+    !response || response.date !== requestedDate ||
+    !['READY', 'PREPARING', 'NOT_FOUND'].includes(response.status) ||
+    (response.status === 'READY' && (typeof response.summary !== 'string' || !response.summary.trim()))
+  ) {
+    return buildFallbackDailyBriefingResponse(requestedDate);
+  }
   return {
     date: response.date || requestedDate,
     status: response.status,

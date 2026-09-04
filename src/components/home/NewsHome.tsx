@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ArticleListItem } from '../../types/article';
 import type { BankImpact, HomeData, HomeIssueCluster } from '../../services/home';
-import { getTopicDisplayName } from '../../services/contentQuality';
+import { getTopicDisplayName } from '../../services/contentPresentation';
 
 interface NewsHomeProps {
   home: HomeData;
@@ -25,7 +25,7 @@ const IMPACT_STYLES: Record<BankImpact, string> = {
 
 export function NewsHome({ home, recentArticles, publishedTopicSlugs }: NewsHomeProps) {
   const briefing = home.latestReadyBriefing;
-  const isPreparing = home.todayStatus === 'PREPARING';
+  const isPreparing = home.todayStatus === 'PREPARING' || !briefing;
 
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">

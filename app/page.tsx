@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import { NewsHome } from '../src/components/home/NewsHome';
-import { getKoreaIsoDate } from '../src/lib/koreaDate';
 import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME } from '../src/lib/siteMetadata';
 import { getSiteUrl } from '../src/lib/siteUrl';
-import { getArticlesByDate } from '../src/services/articleServerApi';
-import { isLowValueContent } from '../src/services/contentQuality';
 import { getHomeData } from '../src/services/home';
 import { getPublishedTopics } from '../src/services/topics';
 
@@ -28,10 +25,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const selectedDate = getKoreaIsoDate();
-  const [home, response, topics] = await Promise.all([
+  const [home, topics] = await Promise.all([
     getHomeData(),
-    getArticlesByDate(selectedDate, null),
     getPublishedTopics(),
   ]);
   const siteUrl = getSiteUrl();
@@ -61,9 +56,7 @@ export default async function Page() {
       />
       <NewsHome
         home={home}
-        recentArticles={response.items.filter(
-          (article) => !isLowValueContent(article.title),
-        )}
+        recentArticles={home.recentArticles}
         publishedTopicSlugs={topics.map((topic) => topic.slug)}
       />
     </>

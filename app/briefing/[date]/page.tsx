@@ -14,7 +14,7 @@ import { getSiteUrl } from '../../../src/lib/siteUrl';
 import type { DailyBriefingResponse } from '../../../src/services/dailyBriefing';
 import { getDailyBriefing } from '../../../src/services/articleServerApi';
 import { getBriefingArchive } from '../../../src/services/briefingArchive';
-import { normalizeEditorialText } from '../../../src/services/contentQuality';
+import { normalizeEditorialText } from '../../../src/services/contentPresentation';
 import { getPublishedTopics } from '../../../src/services/topics';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
 import type { IsoDate } from '../../../src/types/article';

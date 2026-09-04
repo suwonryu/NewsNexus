@@ -8,7 +8,6 @@ import {
   SITE_NAME,
 } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
-import { evaluateArticleIndexEligibility } from '../../../src/services/contentQuality';
 import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
 import {
   getArticleDetail,
@@ -74,8 +73,8 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
   const description = getDescription(article.summary);
   const canonical = `${siteUrl}/news/${parsedId}`;
-  const eligibility = evaluateArticleIndexEligibility(article);
-  const summaryTitle = eligibility.passes
+  const indexable = article.analysis?.indexable === true;
+  const summaryTitle = indexable
     ? `${article.title} | 카카오뱅크 영향 분석`
     : `${article.title} | 요약`;
 
@@ -86,7 +85,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
       canonical,
     },
     robots: {
-      index: eligibility.passes,
+      index: indexable,
       follow: true,
     },
     openGraph: {
@@ -125,8 +124,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   );
   const siteUrl = getSiteUrl();
   const canonical = `${siteUrl}/news/${parsedId}`;
-  const eligibility = evaluateArticleIndexEligibility(article);
-  const pageName = eligibility.passes
+  const indexable = article.analysis?.indexable === true;
+  const pageName = indexable
     ? `${article.title} | 카카오뱅크 영향 분석`
     : `${article.title} 요약`;
   const structuredData = {

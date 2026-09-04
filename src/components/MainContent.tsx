@@ -243,7 +243,7 @@ function MainContent({
           </span>
           {articleDetail.analysis.impactConfidence > 0 && (
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              분석 신뢰도 {Math.round(getDisplayedImpactConfidence(articleDetail.analysis) * 100)}%
+              분석 신뢰도 {Math.round(articleDetail.analysis.impactConfidence * 100)}%
             </span>
           )}
         </div>
@@ -276,7 +276,7 @@ function MainContent({
                 : ''}
             </p>
             <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
-              {getArticleImpactReason(articleDetail)}
+              {articleDetail.analysis.impactReason ?? '영향 분석을 준비하고 있습니다.'}
             </p>
           </div>
         </div>
@@ -373,47 +373,4 @@ function formatImpactDimension(dimension: string): string {
   };
   return labels[dimension] ?? dimension;
 }
-
-function getDisplayedImpactConfidence(
-  analysis: NonNullable<ArticleDetail['analysis']>,
-): number {
-  const evidenceCount = Math.max(1, new Set(analysis.evidenceArticleIds).size);
-  const evidenceCeiling = Math.min(
-    0.84,
-    0.56 + Math.max(0, evidenceCount - 1) * 0.09,
-  );
-  return Math.min(analysis.impactConfidence, evidenceCeiling);
-}
-
-function getArticleImpactReason(article: ArticleDetail): string {
-  const raw = article.analysis?.impactReason ??
-    '이 소식이 카카오뱅크에 미칠 영향은 아직 뚜렷하지 않습니다.';
-  const localized = Object.entries({
-    CREDIT_RISK: '신용·건전성',
-    OPERATIONS: '서비스 운영',
-    REGULATION: '규제',
-    REVENUE: '수익성',
-    GROWTH: '성장',
-    BRAND: '브랜드·고객',
-    COST: '비용',
-  }).reduce((text, [code, label]) => text.replaceAll(code, label), raw);
-  if (localized.includes('근거:')) {
-    return localized;
-  }
-  const evidence = getFirstSummarySentence(article.summary);
-  return evidence ? `${localized} 근거: ${evidence}` : localized;
-}
-
-function getFirstSummarySentence(summary: string | null): string {
-  if (!summary) {
-    return '';
-  }
-  const normalized = summary
-    .replace(/\\n/g, ' ')
-    .replace(/^\s*[-•]\s*/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return normalized.split(/(?<=[.!?])\s+/u)[0] ?? '';
-}
-
 export default MainContent;

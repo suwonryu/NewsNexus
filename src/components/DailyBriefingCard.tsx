@@ -1,5 +1,5 @@
 import type { DailyBriefingResponse } from '../services/dailyBriefing';
-import { normalizeEditorialText } from '../services/contentQuality';
+import { normalizeEditorialText } from '../services/contentPresentation';
 
 interface DailyBriefingCardProps {
   briefing: DailyBriefingResponse;

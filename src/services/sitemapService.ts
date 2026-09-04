@@ -2,7 +2,6 @@ import { unstable_cache } from 'next/cache';
 import { getKoreaIsoDateWithOffset } from '../lib/koreaDate';
 import { getArticleDetail, getDailyBriefing } from './articleServerApi';
 import { getAllReadyBriefings } from './briefingArchive';
-import { evaluateArticleIndexEligibility } from './contentQuality';
 import { getPublishedTopics } from './topics';
 
 const ARTICLE_SITEMAP_LOOKBACK_DAYS = 14;
@@ -55,7 +54,7 @@ const loadSitemapEntries = async (): Promise<SitemapEntry[]> => {
   return entries;
 };
 
-const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v7'], {
+const getCachedSitemapEntries = unstable_cache(loadSitemapEntries, ['sitemap-entries-v8'], {
   revalidate: SITEMAP_REVALIDATE_SECONDS,
 });
 
@@ -77,7 +76,7 @@ async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
     if (briefing.status !== 'READY') {
       continue;
     }
-    for (const article of briefing.featuredArticles.slice(0, 5)) {
+    for (const article of briefing.featuredArticles) {
       if (article.id !== null && !candidateDates.has(article.id)) {
         candidateDates.set(article.id, briefing.date);
       }
@@ -85,27 +84,10 @@ async function getIndexableArticleSitemapEntries(): Promise<SitemapEntry[]> {
   }
 
   const articles = await mapWithConcurrency([...candidateDates.keys()], 6, getArticleDetail);
-  const representatives = new Map<string, NonNullable<(typeof articles)[number]>>();
-
-  for (const article of articles) {
-    if (
-      !article ||
-      !evaluateArticleIndexEligibility(article).passes
-    ) {
-      continue;
-    }
-    const clusterKey = article.analysis?.clusterId ?? String(article.id);
-    const current = representatives.get(clusterKey);
-    if (
-      !current ||
-      (article.analysis?.editorialPriority ?? 0) >
-        (current.analysis?.editorialPriority ?? 0)
-    ) {
-      representatives.set(clusterKey, article);
-    }
-  }
-
-  return [...representatives.values()]
+  return articles
+    .filter((article): article is NonNullable<typeof article> =>
+      article?.analysis?.indexable === true && article.analysis.sitemapEligible === true,
+    )
     .sort((left, right) => right.id - left.id)
     .map((article) => ({
       path: `/news/${article.id}`,
