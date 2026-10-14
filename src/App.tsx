@@ -265,6 +265,8 @@ function App({
     initialArticleId !== null && initialArticleDetail === null,
   );
   const [isDateSheetOpen, setIsDateSheetOpen] = useState(false);
+  const mobileListScrollRef = useRef(0);
+  const articleBodyRef = useRef<HTMLDivElement | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'detail'>(() =>
     initialArticleId !== null ? 'detail' : 'list',
   );
@@ -592,9 +594,11 @@ function App({
 
   const handleSelectDate = (date: string) => {
     if (date === selectedDate) {
+      setIsDateSheetOpen(false);
       return;
     }
 
+    mobileListScrollRef.current = 0;
     setSelectedDate(date);
     setSelectedArticleId(null);
     setSelectedArticleKey(null);
@@ -619,10 +623,14 @@ function App({
 
   const handleSelectArticle = (article: ArticleListItem) => {
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (isMobile && mobileView === 'list') {
+      mobileListScrollRef.current = window.scrollY;
+    }
     const articleKey = getArticleKey(article);
     if (articleKey === selectedArticleKey) {
       if (isMobile) {
         setMobileView('detail');
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       }
       return;
     }
@@ -665,10 +673,15 @@ function App({
     if (isMobile) {
       setMobileView('detail');
     }
+    requestAnimationFrame(() => {
+      const top = isMobile ? 0 : (articleBodyRef.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 100;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+    });
   };
 
   const handleShowArticleList = useCallback(() => {
     setMobileView('list');
+    requestAnimationFrame(() => window.scrollTo({ top: mobileListScrollRef.current, behavior: 'instant' }));
 
     if (typeof window !== 'undefined' && window.location.pathname !== '/explore') {
       updateHistoryEntry(
@@ -758,16 +771,13 @@ function App({
                 {isCurrentIsoDate(selectedDate) ? '오늘 소식 정리 중' : '브리핑 보기'}
               </Link>
             )}
-            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 md:inline">
-              {selectedDate}
-            </span>
           </div>
           <button
             type="button"
             onClick={() => {
               setIsDateSheetOpen(true);
             }}
-            className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff] md:hidden"
+            className="inline-flex items-center rounded-full border border-[#d2d2d7] bg-[#f5f5f7] px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-[#0071e3] hover:text-[#0066cc] dark:border-[#424245] dark:bg-[#272729] dark:text-slate-200 dark:hover:border-[#2997ff] dark:hover:text-[#2997ff]"
           >
             {selectedDate ?? '날짜 선택'}
           </button>
@@ -775,19 +785,18 @@ function App({
       </section>
 
       <div className="mobile-app-shell-body !min-h-[calc(100svh-15rem)] md:hidden flex min-h-0 flex-col gap-3">
-        {mobileView === 'list' ? (
-          <div className="transition-all duration-300 ease-out">
-            <SubMenu
-              selectedDate={selectedDate}
-              items={articles}
-              selectedArticleKey={selectedArticleKey}
-              isLoading={isListLoading || isFetchingMore}
-              hasMore={hasMore}
-              onSelectArticle={handleSelectArticle}
-              onLoadMore={handleLoadMore}
-            />
-          </div>
-        ) : (
+        <div className={mobileView === 'list' ? 'block' : 'hidden'}>
+          <SubMenu
+            selectedDate={selectedDate}
+            items={articles}
+            selectedArticleKey={selectedArticleKey}
+            isLoading={isListLoading || isFetchingMore}
+            hasMore={hasMore}
+            onSelectArticle={handleSelectArticle}
+            onLoadMore={handleLoadMore}
+          />
+        </div>
+        {mobileView === 'detail' && (
           <div className="flex flex-col gap-2 transition-all duration-300 ease-out">
             <button
               type="button"
@@ -807,12 +816,7 @@ function App({
         )}
       </div>
 
-      <div className="hidden min-h-[34rem] md:grid md:h-[calc(100vh-16rem)] md:grid-cols-[260px_360px_1fr] md:gap-3">
-        <MainMenu
-          dateTree={dateTree}
-          selectedDate={selectedDate}
-          onSelectDate={handleSelectDate}
-        />
+      <div className="hidden md:grid md:grid-cols-[300px_minmax(0,1fr)] md:items-start md:gap-4">
         <SubMenu
           selectedDate={selectedDate}
           items={articles}
@@ -821,18 +825,21 @@ function App({
           hasMore={hasMore}
           onSelectArticle={handleSelectArticle}
           onLoadMore={handleLoadMore}
+          className="md:sticky md:top-[100px] md:max-h-[calc(100dvh-116px)]"
         />
-        <MainContent
-          selectedDate={selectedDate}
-          selectedArticleId={selectedArticleId}
-          pendingArticle={pendingArticle}
-          articleDetail={articleDetail}
-          isLoading={isDetailLoading}
-        />
+        <div ref={articleBodyRef} className="min-w-0">
+          <MainContent
+            selectedDate={selectedDate}
+            selectedArticleId={selectedArticleId}
+            pendingArticle={pendingArticle}
+            articleDetail={articleDetail}
+            isLoading={isDetailLoading}
+          />
+        </div>
       </div>
 
       <div
-        className={`fixed inset-0 z-50 md:hidden transition-[visibility] duration-300 ${
+        className={`fixed inset-0 z-50 transition-[visibility] duration-300 ${
           isDateSheetOpen ? 'visible' : 'invisible'
         }`}
       >
@@ -847,8 +854,8 @@ function App({
           }`}
         />
         <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] rounded-t-[28px] border-t border-[#d2d2d7] bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_-20px_48px_rgba(0,0,0,0.5)] ${
-            isDateSheetOpen ? 'translate-y-0' : 'translate-y-full'
+          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[420px] md:-translate-x-1/2 md:rounded-[28px] rounded-t-[28px] border-t border-[#d2d2d7] bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_-20px_48px_rgba(0,0,0,0.5)] ${
+            isDateSheetOpen ? 'translate-y-0 md:-translate-y-1/2' : 'translate-y-full md:translate-y-full'
           } mobile-bottom-sheet`}
         >
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />

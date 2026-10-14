@@ -164,7 +164,7 @@ function MainContent({
         return null;
     }
   };
-  const containerClassName = `overflow-visible rounded-[18px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] md:min-h-0 md:overflow-y-auto md:overscroll-contain ${className ?? ''}`;
+  const containerClassName = `overflow-visible rounded-[18px] border border-[#d2d2d7] bg-white/95 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)] ${className ?? ''}`;
 
   if (!selectedDate) {
     return (

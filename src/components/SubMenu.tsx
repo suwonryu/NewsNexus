@@ -125,8 +125,11 @@ function SubMenu({
     const isAboveViewport = itemRect.top < containerRect.top + 16;
     const isBelowViewport = itemRect.bottom > containerRect.bottom - 16;
 
-    if (isAboveViewport || isBelowViewport) {
-      selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (window.matchMedia('(min-width: 768px)').matches && (isAboveViewport || isBelowViewport)) {
+      container.scrollTo({
+        top: container.scrollTop + itemRect.top - containerRect.top - container.clientHeight / 2 + itemRect.height / 2,
+        behavior: 'smooth',
+      });
     }
   }, [visibleItems.length, selectedArticleKey]);
 
