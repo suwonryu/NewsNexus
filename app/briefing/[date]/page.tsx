@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { cache, Suspense, type ReactNode } from 'react';
 import { BriefingArticleCard } from '../../../src/components/BriefingArticleCard';
 import DailyBriefingCard from '../../../src/components/DailyBriefingCard';
 import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
@@ -18,6 +18,10 @@ import { normalizeEditorialText } from '../../../src/services/contentPresentatio
 import { getPublishedTopics } from '../../../src/services/topics';
 import { getHomeData, getIssues, type HomeIssueCluster } from '../../../src/services/home';
 import type { IsoDate } from '../../../src/types/article';
+
+const getPageBriefing = cache((date: string) =>
+  getDailyBriefing(date, { enqueue: false, throwOnError: true }),
+);
 
 interface BriefingPageProps {
   params: Promise<{ date: string }>;
@@ -46,7 +50,7 @@ export async function generateMetadata({ params }: BriefingPageProps): Promise<M
     };
   }
 
-  const briefing = await getDailyBriefing(date);
+  const briefing = await getPageBriefing(date);
 
   if (briefing.status === 'PREPARING') {
     return {
@@ -112,13 +116,14 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
     notFound();
   }
 
-  const [briefing, issuePage] = await Promise.all([
-    getDailyBriefing(date),
-    getIssues(date, 'DIRECT'),
-  ]);
+  const briefing = await getPageBriefing(date);
 
   if (briefing.status === 'PREPARING') {
-    return <PreparingBriefingState date={date} />;
+    return (
+      <Suspense fallback={<BriefingSupplementLoading label="브리핑 상태" />}>
+        <PreparingBriefingState date={date} />
+      </Suspense>
+    );
   }
 
   if (briefing.status === 'NOT_FOUND') {
@@ -157,13 +162,19 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
           }
         />
 
-          <BriefingDateNavigation date={date} />
+          <Suspense fallback={<BriefingSupplementLoading label="날짜 이동" />}>
+            <BriefingDateNavigation date={date} />
+          </Suspense>
 
           <DailyBriefingCard briefing={briefing} />
 
           <EditorialAnalysisSection briefing={briefing} />
-          <BriefingIssueSection clusters={issuePage.items} />
-          <RelatedTopics date={briefing.date} />
+          <Suspense fallback={<BriefingSupplementLoading label="관련 이슈" />}>
+            <BriefingIssues date={date} />
+          </Suspense>
+          <Suspense fallback={<BriefingSupplementLoading label="관련 주제" />}>
+            <RelatedTopics date={briefing.date} />
+          </Suspense>
 
           <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-[28px] border border-[#d2d2d7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
@@ -243,6 +254,19 @@ export default async function BriefingPage({ params }: BriefingPageProps) {
       </div>
     </>
   );
+}
+
+function BriefingSupplementLoading({ label }: { label: string }) {
+  return (
+    <div role="status" className="my-4 animate-pulse rounded-2xl bg-slate-100 px-5 py-4 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+      {label} 불러오는 중…
+    </div>
+  );
+}
+
+async function BriefingIssues({ date }: { date: string }) {
+  const issues = await getIssues(date, 'DIRECT');
+  return <BriefingIssueSection clusters={issues.items} />;
 }
 
 function BriefingIssueSection({ clusters }: { clusters: HomeIssueCluster[] }) {

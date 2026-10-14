@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import App from '../../src/App';
 import { getKoreaIsoDate } from '../../src/lib/koreaDate';
@@ -27,14 +28,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const relevance = params.relevance === 'INDUSTRY' ? 'INDUSTRY' : 'DIRECT';
 
   if (params.view !== 'articles') {
-    const [issuePage, home] = await Promise.all([
-      getIssues(selectedDate, relevance),
-      selectedDate === getKoreaIsoDate() && relevance === 'DIRECT'
-        ? getHomeData()
-        : Promise.resolve(null),
-    ]);
-    const clusters =
-      issuePage.items.length > 0 ? issuePage.items : (home?.topClusters ?? []);
+    const clusters = loadExploreClusters(selectedDate, relevance);
     return (
       <IssueExplorer
         date={selectedDate}
@@ -67,7 +61,7 @@ function IssueExplorer({
 }: {
   date: string;
   relevance: 'DIRECT' | 'INDUSTRY';
-  clusters: HomeIssueCluster[];
+  clusters: Promise<HomeIssueCluster[]>;
 }) {
   return (
     <main className="min-h-screen px-4 pb-20 pt-5 sm:px-6 lg:px-8">
@@ -133,80 +127,111 @@ function IssueExplorer({
           </fieldset>
         </section>
 
-        {clusters.length > 0 ? (
-          <section className="mt-8" aria-labelledby="cluster-list-heading">
-            <div className="flex items-center justify-between gap-4">
-              <h2
-                id="cluster-list-heading"
-                className="text-2xl font-[730] tracking-[-0.035em] text-slate-950 dark:text-white"
-              >
-                {date} 이슈
-              </h2>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                주요 이슈 {clusters.length}개
-              </span>
-            </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {clusters.map((cluster) => (
-                <article
-                  key={cluster.id}
-                  className="flex flex-col rounded-[22px] border border-slate-200 bg-white/90 p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/[0.04]"
-                >
-                  <p className="text-xs font-semibold text-[#0066cc] dark:text-[#2997ff]">
-                    기사 {cluster.articleCount}건 · {cluster.sourceCount}개 매체
-                  </p>
-                  <h3 className="mt-2 text-xl font-[690] leading-7 text-slate-950 dark:text-white">
-                    {cluster.title}
-                  </h3>
-                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    {cluster.summary}
-                  </p>
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:bg-black/20 dark:text-slate-200">
-                    <span className="font-semibold">왜 중요한가: </span>
-                    {cluster.impactReason}
-                  </div>
-                  {cluster.representativeArticleId && (
-                    <Link
-                      href={`/news/${cluster.representativeArticleId}`}
-                      className="mt-5 self-start text-sm font-semibold text-[#0066cc] hover:underline dark:text-[#2997ff]"
-                    >
-                      대표 기사 보기
-                    </Link>
-                  )}
-                  {cluster.articles.length > 1 && (
-                    <details className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
-                      <summary className="cursor-pointer text-sm font-semibold text-slate-600 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
-                        관련 기사 {cluster.articles.length - 1}건 함께 보기
-                      </summary>
-                      <ul className="mt-3 space-y-2">
-                        {cluster.articles.slice(1).map((article) => (
-                          <li key={`${article.id ?? 'original'}:${article.link}`}>
-                            <Link
-                              href={article.id ? `/news/${article.id}` : article.link}
-                              className="block rounded-xl bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-700 hover:text-[#0066cc] dark:bg-black/20 dark:text-slate-200 dark:hover:text-[#2997ff]"
-                            >
-                              {article.title}
-                              <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                                {article.sourceName}
-                              </span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
-        ) : (
-          <div className="mt-8 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
-            이날 눈여겨볼 {relevance === 'DIRECT' ? '카카오뱅크 소식' : '금융권 이슈'}은 아직
-            없어요. 기사별 보기에서 개별 뉴스를 살펴보세요.
-          </div>
-        )}
+        <Suspense fallback={<ExploreResultsLoading />}>
+          <IssueResults date={date} relevance={relevance} clusters={clusters} />
+        </Suspense>
       </div>
     </main>
+  );
+}
+
+async function loadExploreClusters(date: string, relevance: 'DIRECT' | 'INDUSTRY') {
+  const issues = await getIssues(date, relevance);
+  if (issues.items.length > 0 || date !== getKoreaIsoDate() || relevance !== 'DIRECT') {
+    return issues.items;
+  }
+  return (await getHomeData()).topClusters;
+}
+
+function ExploreResultsLoading() {
+  return (
+    <div role="status" className="mt-8 animate-pulse rounded-3xl bg-slate-100 p-8 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+      이슈 불러오는 중…
+    </div>
+  );
+}
+
+async function IssueResults({ date, relevance, clusters: pendingClusters }: {
+  date: string;
+  relevance: 'DIRECT' | 'INDUSTRY';
+  clusters: Promise<HomeIssueCluster[]>;
+}) {
+  const clusters = await pendingClusters;
+  return (
+    <>
+      {clusters.length > 0 ? (
+        <section className="mt-8" aria-labelledby="cluster-list-heading">
+          <div className="flex items-center justify-between gap-4">
+            <h2
+              id="cluster-list-heading"
+              className="text-2xl font-[730] tracking-[-0.035em] text-slate-950 dark:text-white"
+            >
+              {date} 이슈
+            </h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              주요 이슈 {clusters.length}개
+            </span>
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {clusters.map((cluster) => (
+              <article
+                key={cluster.id}
+                className="flex flex-col rounded-[22px] border border-slate-200 bg-white/90 p-5 shadow-[0_14px_42px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/[0.04]"
+              >
+                <p className="text-xs font-semibold text-[#0066cc] dark:text-[#2997ff]">
+                  기사 {cluster.articleCount}건 · {cluster.sourceCount}개 매체
+                </p>
+                <h3 className="mt-2 text-xl font-[690] leading-7 text-slate-950 dark:text-white">
+                  {cluster.title}
+                </h3>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {cluster.summary}
+                </p>
+                <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:bg-black/20 dark:text-slate-200">
+                  <span className="font-semibold">왜 중요한가: </span>
+                  {cluster.impactReason}
+                </div>
+                {cluster.representativeArticleId && (
+                  <Link
+                    href={`/news/${cluster.representativeArticleId}`}
+                    className="mt-5 self-start text-sm font-semibold text-[#0066cc] hover:underline dark:text-[#2997ff]"
+                  >
+                    대표 기사 보기
+                  </Link>
+                )}
+                {cluster.articles.length > 1 && (
+                  <details className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
+                    <summary className="cursor-pointer text-sm font-semibold text-slate-600 hover:text-[#0066cc] dark:text-slate-300 dark:hover:text-[#2997ff]">
+                      관련 기사 {cluster.articles.length - 1}건 함께 보기
+                    </summary>
+                    <ul className="mt-3 space-y-2">
+                      {cluster.articles.slice(1).map((article) => (
+                        <li key={`${article.id ?? 'original'}:${article.link}`}>
+                          <Link
+                            href={article.id ? `/news/${article.id}` : article.link}
+                            className="block rounded-xl bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-700 hover:text-[#0066cc] dark:bg-black/20 dark:text-slate-200 dark:hover:text-[#2997ff]"
+                          >
+                            {article.title}
+                            <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                              {article.sourceName}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="mt-8 rounded-[24px] border border-dashed border-slate-300 bg-white/60 p-8 text-slate-600 dark:border-white/15 dark:bg-white/[0.025] dark:text-slate-300">
+          이날 눈여겨볼 {relevance === 'DIRECT' ? '카카오뱅크 소식' : '금융권 이슈'}은 아직
+          없어요. 기사별 보기에서 개별 뉴스를 살펴보세요.
+        </div>
+      )}
+    </>
   );
 }
 
