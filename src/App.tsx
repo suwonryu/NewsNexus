@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import MainMenu from './components/MainMenu';
+import ArticleCalendar from './components/ArticleCalendar';
 import SubMenu from './components/SubMenu';
 import MainContent from './components/MainContent';
 import {
@@ -266,6 +266,7 @@ function App({
   );
   const [isDateSheetOpen, setIsDateSheetOpen] = useState(false);
   const mobileListScrollRef = useRef(0);
+  const dateDialogRef = useRef<HTMLDivElement | null>(null);
   const articleBodyRef = useRef<HTMLDivElement | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'detail'>(() =>
     initialArticleId !== null ? 'detail' : 'list',
@@ -716,9 +717,26 @@ function App({
     }
 
     const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      document.body.style.overflow = 'hidden';
+    }
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const dialog = dateDialogRef.current;
+    dialog?.querySelector<HTMLButtonElement>('button')?.focus();
 
     const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && dialog) {
+        const buttons = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
       if (event.key === 'Escape') {
         setIsDateSheetOpen(false);
       }
@@ -728,12 +746,13 @@ function App({
     return () => {
       window.removeEventListener('keydown', onEscape);
       document.body.style.overflow = prevOverflow;
+      previousFocus?.focus({ preventScroll: true });
     };
   }, [isDateSheetOpen]);
 
   return (
     <div className="mobile-app-shell mx-auto max-w-[1320px] md:min-h-screen md:px-8 md:pb-6 md:pt-5">
-      <section className="my-3 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
+      <section className="relative my-3 rounded-[18px] border border-[#d2d2d7] bg-white/95 px-4 py-3 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_18px_44px_rgba(0,0,0,0.36)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-[#0071e3] dark:text-[#2997ff]">탐색</p>
@@ -774,6 +793,9 @@ function App({
           </div>
           <button
             type="button"
+            aria-haspopup="dialog"
+            aria-expanded={isDateSheetOpen}
+            aria-controls="article-date-calendar"
             onClick={() => {
               setIsDateSheetOpen(true);
             }}
@@ -781,6 +803,51 @@ function App({
           >
             {selectedDate ?? '날짜 선택'}
           </button>
+        </div>
+        <div
+          className={`fixed inset-0 z-50 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-[360px] transition-[visibility] duration-300 ${
+            isDateSheetOpen ? 'visible' : 'invisible'
+          }`}
+        >
+          <button
+            type="button"
+            aria-label="날짜 메뉴 닫기"
+            onClick={() => setIsDateSheetOpen(false)}
+            className={`absolute inset-0 md:fixed md:backdrop-blur-none backdrop-blur-[1px] transition-opacity duration-300 ${
+              isDateSheetOpen
+                ? 'bg-slate-900/40 md:bg-transparent opacity-100 pointer-events-auto dark:bg-slate-950/65 md:dark:bg-transparent'
+                : 'bg-slate-900/0 opacity-0 pointer-events-none'
+            }`}
+          />
+          <div
+            ref={dateDialogRef}
+            id="article-date-calendar"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="article-date-calendar-title"
+            className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] overflow-y-auto overscroll-contain md:relative md:inset-auto md:w-full md:rounded-[20px] rounded-t-[28px] border-t border-[#d2d2d7] bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_-20px_48px_rgba(0,0,0,0.5)] ${
+              isDateSheetOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-2'
+            } mobile-bottom-sheet`}
+          >
+            <div className="mx-auto mb-4 md:hidden h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+            <div className="mb-4 flex items-center justify-between">
+              <h2 id="article-date-calendar-title" className="text-base font-[650] text-slate-900 dark:text-slate-50">날짜 선택</h2>
+              <button
+                type="button"
+                onClick={() => setIsDateSheetOpen(false)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
+              >
+                닫기
+              </button>
+            </div>
+            {isDateSheetOpen && (
+              <ArticleCalendar
+                dateTree={dateTree}
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
+              />
+            )}
+          </div>
         </div>
       </section>
 
@@ -834,48 +901,6 @@ function App({
             pendingArticle={pendingArticle}
             articleDetail={articleDetail}
             isLoading={isDetailLoading}
-          />
-        </div>
-      </div>
-
-      <div
-        className={`fixed inset-0 z-50 transition-[visibility] duration-300 ${
-          isDateSheetOpen ? 'visible' : 'invisible'
-        }`}
-      >
-        <button
-          type="button"
-          aria-label="날짜 메뉴 닫기"
-          onClick={() => setIsDateSheetOpen(false)}
-          className={`absolute inset-0 backdrop-blur-[1px] transition-opacity duration-300 ${
-            isDateSheetOpen
-              ? 'bg-slate-900/40 opacity-100 pointer-events-auto dark:bg-slate-950/65'
-              : 'bg-slate-900/0 opacity-0 pointer-events-none'
-          }`}
-        />
-        <div
-          className={`absolute bottom-0 left-0 right-0 max-h-[78dvh] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:w-[420px] md:-translate-x-1/2 md:rounded-[28px] rounded-t-[28px] border-t border-[#d2d2d7] bg-white px-5 pb-6 pt-4 shadow-[0_-20px_40px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out dark:border-[#424245] dark:bg-[#1d1d1f] dark:shadow-[0_-20px_48px_rgba(0,0,0,0.5)] ${
-            isDateSheetOpen ? 'translate-y-0 md:-translate-y-1/2' : 'translate-y-full md:translate-y-full'
-          } mobile-bottom-sheet`}
-        >
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-[650] text-slate-900 dark:text-slate-50">날짜 선택</h2>
-            <button
-              type="button"
-              onClick={() => setIsDateSheetOpen(false)}
-              className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
-            >
-              닫기
-            </button>
-          </div>
-          <MainMenu
-            dateTree={dateTree}
-            selectedDate={selectedDate}
-            onSelectDate={handleSelectDate}
-            showHeader={false}
-            scrollMode="always"
-            className="h-[calc(78dvh-96px)] border-0 bg-transparent p-0 shadow-none"
           />
         </div>
       </div>
