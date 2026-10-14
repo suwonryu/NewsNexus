@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import App from '../../../src/App';
 import { getKoreaIsoDate } from '../../../src/lib/koreaDate';
@@ -8,14 +9,13 @@ import {
   SITE_NAME,
 } from '../../../src/lib/siteMetadata';
 import { getSiteUrl } from '../../../src/lib/siteUrl';
-import type { ArticleDetail, ArticleListItem, IsoDate } from '../../../src/types/article';
+import type { ArticleDetail, ArticleListItem } from '../../../src/types/article';
 import {
   getArticleDetail,
-  getArticlesByDate,
   getDateTree,
 } from '../../../src/services/articleServerApi';
 
-const ARTICLE_LIST_PAGE_SIZE = 20;
+const getPageArticle = cache((id: number) => getArticleDetail(id, { throwOnError: true }));
 
 interface ArticlePageProps {
   params: Promise<{ id: string }>;
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     };
   }
 
-  const article = await getArticleDetail(parsedId);
+  const article = await getPageArticle(parsedId);
 
   if (!article) {
     return {
@@ -107,21 +107,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  const article = await getArticleDetail(parsedId);
+  const article = await getPageArticle(parsedId);
 
   if (!article) {
     notFound();
   }
 
   const selectedDate = getArticleIsoDate(article, getKoreaIsoDate());
-  const [response, dateTree] = await Promise.all([
-    getArticlesForInitialRender(selectedDate, article),
-    getDateTree(),
-  ]);
-  const initialArticles = ensureArticleInList(
-    response.items,
-    createListItemFromDetail(article, selectedDate),
-  );
+  const dateTree = await getDateTree();
+  // Render the selected article immediately; restore the surrounding list after hydration.
+  const initialArticles = [createListItemFromDetail(article, selectedDate)];
   const siteUrl = getSiteUrl();
   const canonical = `${siteUrl}/news/${parsedId}`;
   const indexable = article.analysis?.indexable === true;
@@ -172,8 +167,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         initialSelectedDate={selectedDate}
         initialDateTree={dateTree.years}
         initialArticles={initialArticles}
-        initialNextCursor={response.nextCursor}
-        initialHasMore={response.hasMore}
+        deferInitialArticleList
       />
     </>
   );
@@ -277,10 +271,6 @@ function getArticleIsoDate(article: ArticleDetail, fallbackDate: string): string
   );
 }
 
-function getArticleKey(article: Pick<ArticleListItem, 'id' | 'link'>): string {
-  return `${article.id ?? 'null'}:${article.link}`;
-}
-
 function getSourceName(link: string): string {
   try {
     return new URL(link).hostname;
@@ -296,60 +286,5 @@ function createListItemFromDetail(article: ArticleDetail, fallbackDate: string):
     link: article.link,
     publishedDate: getArticleIsoDate(article, fallbackDate),
     sourceName: getSourceName(article.link),
-  };
-}
-
-function ensureArticleInList(
-  items: ArticleListItem[],
-  selectedArticle: ArticleListItem,
-): ArticleListItem[] {
-  const selectedArticleKey = getArticleKey(selectedArticle);
-
-  if (items.some((item) => getArticleKey(item) === selectedArticleKey)) {
-    return items;
-  }
-
-  return [selectedArticle, ...items];
-}
-
-async function getArticlesForInitialRender(
-  date: IsoDate,
-  article: ArticleDetail,
-): Promise<{
-  items: ArticleListItem[];
-  nextCursor: string | null;
-  hasMore: boolean;
-}> {
-  if (typeof article.offset !== 'number' || article.offset < 0) {
-    const response = await getArticlesByDate(date, null, ARTICLE_LIST_PAGE_SIZE);
-    return {
-      items: response.items,
-      nextCursor: response.nextCursor,
-      hasMore: response.hasNext,
-    };
-  }
-
-  let cursor: string | null = null;
-  let aggregatedItems: ArticleListItem[] = [];
-  let nextCursor: string | null = null;
-  let hasMore = false;
-
-  do {
-    const response = await getArticlesByDate(date, cursor, ARTICLE_LIST_PAGE_SIZE);
-    aggregatedItems = [...aggregatedItems, ...response.items];
-    nextCursor = response.nextCursor;
-    hasMore = response.hasNext;
-
-    if (aggregatedItems.length > article.offset || !response.nextCursor) {
-      break;
-    }
-
-    cursor = response.nextCursor;
-  } while (cursor);
-
-  return {
-    items: aggregatedItems,
-    nextCursor,
-    hasMore,
   };
 }

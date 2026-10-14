@@ -231,6 +231,7 @@ interface AppProps {
   initialArticles?: ArticleListItem[];
   initialNextCursor?: string | null;
   initialHasMore?: boolean;
+  deferInitialArticleList?: boolean;
 }
 
 function App({
@@ -241,6 +242,7 @@ function App({
   initialArticles = [],
   initialNextCursor = null,
   initialHasMore = false,
+  deferInitialArticleList = false,
 }: AppProps) {
   const consumedServerInitialListRef = useRef(false);
   const [dateTree, setDateTree] = useState<DateTreeYear[]>(initialDateTree);
@@ -373,7 +375,8 @@ function App({
     if (
       !consumedServerInitialListRef.current &&
       initialSelectedDate &&
-      selectedDate === initialSelectedDate
+      selectedDate === initialSelectedDate &&
+      !deferInitialArticleList
     ) {
       consumedServerInitialListRef.current = true;
       setIsListLoading(false);
@@ -385,18 +388,26 @@ function App({
     const loadArticles = async () => {
       setIsListLoading(true);
       try {
-        const listResponse = await fetchArticlesByDate(selectedDate, null, ARTICLE_LIST_PAGE_SIZE);
-        const response = {
-          items: listResponse.items,
-          nextCursor: listResponse.nextCursor,
-          hasMore: listResponse.hasNext,
-        };
+        const restoringInitialList =
+          deferInitialArticleList && !consumedServerInitialListRef.current &&
+          selectedDate === initialSelectedDate;
+        const response = restoringInitialList &&
+          typeof initialArticleDetail?.offset === 'number' && initialArticleDetail.offset >= 0
+          ? await fetchArticlesThroughOffset(selectedDate, initialArticleDetail.offset)
+          : await fetchArticlesByDate(selectedDate, null, ARTICLE_LIST_PAGE_SIZE).then((page) => ({
+              items: page.items,
+              nextCursor: page.nextCursor,
+              hasMore: page.hasNext,
+            }));
 
         if (disposed) {
           return;
         }
 
-        setArticles(dedupeArticles(response.items));
+        if (restoringInitialList) consumedServerInitialListRef.current = true;
+        setArticles(restoringInitialList && initialArticleDetail
+          ? ensureArticleInList(response.items, createListItemFromDetail(initialArticleDetail, selectedDate))
+          : dedupeArticles(response.items));
         setNextCursor(response.nextCursor);
         setHasMore(response.hasMore);
       } catch {
@@ -417,7 +428,7 @@ function App({
     return () => {
       disposed = true;
     };
-  }, [initialSelectedDate, selectedDate]);
+  }, [deferInitialArticleList, initialArticleDetail, initialSelectedDate, selectedDate]);
 
   useEffect(() => {
     let disposed = false;
